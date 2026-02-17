@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>דשבורד סטטיסטיקות</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">📊 דשבורד סטטיסטיקות</div>
+      <div class="badge">גישה רק לאחר התחברות + הרשאה</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
+      <button class="primary" id="loginBtn">התחברות</button>
+      <button class="danger hidden" id="logoutBtn">התנתקות</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h3>פילטרים כמותיים</h3>
+    <div class="row">
+      <div>
+        <label>חתך לפי</label>
+        <select id="groupBy">
+          <option value="type">סוג</option>
+          <option value="sector">גזרה</option>
+          <option value="role">תפקיד</option>
+          <option value="name">שם מבצע</option>
+        </select>
+      </div>
+      <div>
+        <label>טווח ימים אחורה</label>
+        <select id="daysBack">
+          <option value="7">7</option>
+          <option value="30" selected>30</option>
+          <option value="90">90</option>
+          <option value="365">365</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="loadBtn">טען סטטיסטיקות</button>
+    </div>
+    <div class="small" id="dashStatus"></div>
+  </div>
+
+  <div class="card">
+    <h3>גרף</h3>
+    <canvas id="chart" height="160"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>טבלת ספירות</h3>
+    <pre id="table" style="white-space:pre-wrap"></pre>
+  </div>
+</div>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
