@@ -12,17 +12,37 @@
   <div class="bar">
     <div>
       <div class="brand">📊 דשבורד סטטיסטיקות</div>
-      <div class="badge">גישה רק לאחר התחברות + הרשאה</div>
+      <div class="badge">גישה רק למנהלים מורשים (Email/Password)</div>
     </div>
     <div class="actions" style="margin:0">
       <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
-      <button class="primary" id="loginBtn">התחברות</button>
+      <button class="primary" id="loginBtn">התחברות מנהל</button>
       <button class="danger hidden" id="logoutBtn">התנתקות</button>
     </div>
   </div>
 </header>
 
 <div class="container">
+
+  <!-- כרטיס התחברות מנהל (חדש) -->
+  <div class="card" id="loginCard">
+    <h3>התחברות מנהל</h3>
+
+    <label>אימייל</label>
+    <input id="adminEmail" type="email" placeholder="name@example.com" autocomplete="username"/>
+
+    <label>סיסמה</label>
+    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+    <div class="actions">
+      <button class="primary" id="loginBtnInline">התחברות</button>
+      <button class="danger hidden" id="logoutBtnInline">התנתקות</button>
+    </div>
+
+    <div class="small" id="loginStatus">🔒 לא מחובר</div>
+    <div class="small">* רק משתמשים שמופיעים ברשימת <b>admins</b> יראו סטטיסטיקות.</div>
+  </div>
+
   <div class="card">
     <h3>פילטרים כמותיים</h3>
     <div class="row">
@@ -61,6 +81,19 @@
     <pre id="table" style="white-space:pre-wrap"></pre>
   </div>
 </div>
+
+<script type="module">
+  // סנכרון בין זוג כפתורי header לזוג הכפתורים בתוך הכרטיס
+  // כדי שתוכל ללחוץ על "התחברות" מכל מקום.
+  const bind = (srcId, dstId) => {
+    const src = document.getElementById(srcId);
+    const dst = document.getElementById(dstId);
+    if (src && dst) src.addEventListener("click", () => dst.click());
+  };
+
+  bind("loginBtn", "loginBtnInline");
+  bind("logoutBtn", "logoutBtnInline");
+</script>
 
 <script type="module" src="js/dashboard.js"></script>
 </body>
