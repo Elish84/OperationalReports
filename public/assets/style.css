@@ -1,0 +1,82 @@
+/* public/assets/style.css */
+:root{
+  --bg:#0b1220;
+  --card:#121c2f;
+  --muted:#8aa0c6;
+  --text:#eaf0ff;
+  --accent:#4ade80;
+  --danger:#fb7185;
+  --line:#22314f;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --r:14px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial;
+  background: radial-gradient(1200px 900px at 10% 0%, #111b33 0%, var(--bg) 60%);
+  color:var(--text);
+}
+
+header{
+  position:sticky; top:0; z-index:10;
+  background: rgba(10,18,35,.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; gap:10px;
+  max-width: 980px; margin:0 auto;
+}
+
+.brand{font-weight:800; letter-spacing:.2px}
+.badge{font-size:12px; color:var(--muted)}
+.container{max-width:980px; margin:0 auto; padding:14px}
+.card{
+  background: linear-gradient(180deg, rgba(18,28,47,.92), rgba(18,28,47,.80));
+  border:1px solid var(--line);
+  box-shadow: var(--shadow);
+  border-radius: var(--r);
+  padding:14px;
+  margin-bottom:12px;
+}
+h2,h3{margin:0 0 10px 0}
+label{display:block; margin:10px 0 6px; color:var(--muted); font-size:13px}
+input,select,textarea{
+  width:100%;
+  padding:12px 12px;
+  border-radius: 12px;
+  border:1px solid rgba(255,255,255,.08);
+  background:#0b1428;
+  color:var(--text);
+  outline:none;
+}
+textarea{min-height:96px; resize:vertical}
+.row{display:flex; gap:10px}
+.row>*{flex:1}
+.actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+button{
+  padding:12px 14px;
+  border-radius: 12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:#0b1428;
+  color:var(--text);
+  cursor:pointer;
+}
+button.primary{background: rgba(74,222,128,.14); border-color: rgba(74,222,128,.35)}
+button.danger{background: rgba(251,113,133,.12); border-color: rgba(251,113,133,.35)}
+.small{font-size:12px; color:var(--muted)}
+hr{border:none; border-top:1px solid var(--line); margin:12px 0}
+.hidden{display:none !important}
+
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--muted);
+  font-size:12px;
+}
