@@ -1,10 +1,17 @@
 // public/js/dashboard.js
-import { functions } from "./firebase-init.js";
-import { loginGoogle, logout, watchAuth } from "./auth.js";
-import { httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-functions.js";
+import { db } from "./firebase-init.js";
+import { loginEmailPassword, logout, watchAuth } from "./auth.js";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const el = (id)=>document.getElementById(id);
-const status = el("dashStatus");
+const dashStatus = el("dashStatus");
+const loginStatus = el("loginStatus");
 
 let chart;
 
@@ -13,10 +20,7 @@ function renderChart(labels, values){
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
     type: "bar",
-    data: {
-      labels,
-      datasets: [{ label:"כמות", data: values }]
-    },
+    data: { labels, datasets: [{ label:"כמות", data: values }] },
     options: {
       responsive:true,
       plugins:{ legend:{ display:true } },
@@ -30,43 +34,92 @@ function renderTable(obj){
   el("table").textContent = entries.map(([k,v])=>`${k}: ${v}`).join("\n") || "אין נתונים";
 }
 
-watchAuth((u)=>{
-  el("loginBtn").classList.toggle("hidden", !!u);
-  el("logoutBtn").classList.toggle("hidden", !u);
-});
+// Helper: attach handler if element exists
+function onClick(id, handler){
+  const node = el(id);
+  if (node) node.addEventListener("click", handler);
+}
 
-el("loginBtn").addEventListener("click", async ()=>{
-  try{
-    status.textContent = "מתחבר...";
-    await loginGoogle();
-    status.textContent = "✅ התחברת. עכשיו ניתן לטעון נתונים.";
-  }catch(e){
-    console.error(e);
-    status.textContent = "❌ התחברות נכשלה";
+watchAuth((u)=>{
+  // toggle both header + inline buttons (if exist)
+  ["loginBtn","loginBtnInline"].forEach(id => el(id)?.classList.toggle("hidden", !!u));
+  ["logoutBtn","logoutBtnInline"].forEach(id => el(id)?.classList.toggle("hidden", !u));
+
+  if (loginStatus) {
+    loginStatus.textContent = u
+      ? `✅ מחובר: ${u.email || "anonymous"}`
+      : "🔒 לא מחובר";
   }
 });
 
-el("logoutBtn").addEventListener("click", async ()=>{
-  await logout();
-  status.textContent = "התנתקת";
-});
-
-el("loadBtn").addEventListener("click", async ()=>{
+async function doLogin(){
   try{
-    status.textContent = "טוען...";
+    if (loginStatus) loginStatus.textContent = "מתחבר...";
+    const email = el("adminEmail")?.value?.trim();
+    const pass = el("adminPass")?.value;
+
+    if (!email || !pass) {
+      if (loginStatus) loginStatus.textContent = "❌ חסר אימייל או סיסמה";
+      return;
+    }
+
+    await loginEmailPassword(email, pass);
+
+    if (loginStatus) loginStatus.textContent = "✅ התחברת. אפשר לטעון סטטיסטיקות.";
+  }catch(e){
+    console.error(e);
+    if (loginStatus) loginStatus.textContent = "❌ התחברות נכשלה (בדוק אימייל/סיסמה)";
+  }
+}
+
+async function doLogout(){
+  await logout();
+  if (loginStatus) loginStatus.textContent = "התנתקת";
+  dashStatus.textContent = "";
+  el("table").textContent = "";
+  if (chart) chart.destroy();
+}
+
+// login/logout handlers (header + inline)
+onClick("loginBtn", doLogin);
+onClick("loginBtnInline", doLogin);
+onClick("logoutBtn", doLogout);
+onClick("logoutBtnInline", doLogout);
+
+onClick("loadBtn", async ()=>{
+  try{
+    dashStatus.textContent = "טוען...";
+
     const groupBy = el("groupBy").value;
     const daysBack = Number(el("daysBack").value);
+    const since = Timestamp.fromDate(new Date(Date.now() - daysBack * 24*60*60*1000));
 
-    const getStats = httpsCallable(functions, "getStats");
-    const res = await getStats({ groupBy, daysBack });
+    // קריאה ישירה ל-Firestore (מוגן ע\"י Rules: read רק ל-admin)
+    const qRef = query(
+      collection(db, "reviews"),
+      where("createdAt", ">=", since)
+    );
 
-    const counts = res.data?.counts || {};
+    const snap = await getDocs(qRef);
+
+    const counts = {};
+    snap.forEach(doc => {
+      const d = doc.data() || {};
+      let key = "לא ידוע";
+      if (groupBy === "type") key = d.type || "לא ידוע";
+      if (groupBy === "sector") key = d.meta?.sector || "לא ידוע";
+      if (groupBy === "role") key = d.meta?.role || "לא ידוע";
+      if (groupBy === "name") key = d.meta?.name || "לא ידוע";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
     renderTable(counts);
     renderChart(Object.keys(counts), Object.values(counts));
 
-    status.textContent = "✅ נטען";
+    dashStatus.textContent = `✅ נטען (${snap.size})`;
   }catch(e){
     console.error(e);
-    status.textContent = "❌ אין הרשאה / תקלה בשרת";
+    // אם לא admin תראה לרוב permission-denied
+    dashStatus.textContent = "❌ אין הרשאה (אתה לא admin) / תקלה";
   }
 });
