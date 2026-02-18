@@ -25,7 +25,7 @@ const ratings = [
   { label:"⭐⭐⭐⭐", v:4 },
   { label:"⭐⭐⭐⭐⭐", v:5 }
 ];
-["r1","r2","r3","r4","r5"].forEach(id=>{
+["r1","r2","r3","r4","r5","r6","r7"].forEach(id=>{
   const sel = document.getElementById(id);
   ratings.forEach(r=>{
     const o = document.createElement("option");
