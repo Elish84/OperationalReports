@@ -16,6 +16,7 @@
     </div>
     <div class="actions" style="margin:0">
       <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
       <button class="primary" id="loginBtn">התחברות מנהל</button>
       <button class="danger hidden" id="logoutBtn">התנתקות</button>
     </div>
@@ -24,7 +25,16 @@
 
 <div class="container">
 
-  <!-- כרטיס התחברות מנהל (חדש) -->
+  <!-- ניווט מהיר (חדש) -->
+  <div class="card">
+    <h3>ניווט מהיר</h3>
+    <div class="small">לצפייה בכל הביקורות והתרגילים בטבלה (כולל ציונים, הערות ותאריך) עבור מנהלים.</div>
+    <div class="actions">
+      <a href="reports.html" style="text-decoration:none"><button class="primary">פתח רשימת רשומות 🗂️</button></a>
+    </div>
+  </div>
+
+  <!-- כרטיס התחברות מנהל -->
   <div class="card" id="loginCard">
     <h3>התחברות מנהל</h3>
 
@@ -40,7 +50,7 @@
     </div>
 
     <div class="small" id="loginStatus">🔒 לא מחובר</div>
-    <div class="small">* רק משתמשים שמופיעים ברשימת <b>admins</b> יראו סטטיסטיקות.</div>
+    <div class="small">* רק משתמשים שמופיעים ברשימת <b>admins</b> יראו סטטיסטיקות ורשומות.</div>
   </div>
 
   <div class="card">
@@ -84,7 +94,6 @@
 
 <script type="module">
   // סנכרון בין זוג כפתורי header לזוג הכפתורים בתוך הכרטיס
-  // כדי שתוכל ללחוץ על "התחברות" מכל מקום.
   const bind = (srcId, dstId) => {
     const src = document.getElementById(srcId);
     const dst = document.getElementById(dstId);
