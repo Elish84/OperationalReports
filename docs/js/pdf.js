@@ -235,7 +235,7 @@ export async function exportPdf(d, photos) {
 
     setHebrewFont(doc, "normal", 11);
     for (const [i, t] of d.keep.slice(0, 3).entries()) {
-      const lines = splitRightText(doc, `${i + 1}. ${t}`, maxW);
+      const lines = splitRightText(doc, `${t} :${i + 1}`, maxW);
       for (const line of lines) {
         rightText(doc, line, xRight, y);
         y += 14;
@@ -252,7 +252,7 @@ export async function exportPdf(d, photos) {
 
     setHebrewFont(doc, "normal", 11);
     for (const [i, t] of d.improve.slice(0, 3).entries()) {
-      const lines = splitRightText(doc, `${i + 1}. ${t}`, maxW);
+      const lines = splitRightText(doc, `${t} :${i + 1}`, maxW);
       for (const line of lines) {
         rightText(doc, line, xRight, y);
         y += 14;
@@ -268,7 +268,8 @@ export async function exportPdf(d, photos) {
     rightText(doc, "הערות", xRight, y); y += 14;
 
     setHebrewFont(doc, "normal", 11);
-    const lines = splitRightText(doc, d.notes, maxW);
+    const rawLines = doc.splitTextToSize(d.notes, maxW);
+    const lines = rawLines.map(l => rtlFix(l));
     for (const line of lines) {
       rightText(doc, line, xRight, y);
       y += 14;
