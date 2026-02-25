@@ -6,7 +6,68 @@
   <title>דשבורד סטטיסטיקות</title>
   <link rel="stylesheet" href="assets/style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Visual improvements (light text + better filter layout) -->
+  <style>
+    :root{
+      --dashText: rgba(255,255,255,.92);
+      --dashText2: rgba(255,255,255,.72);
+      --dashBorder: rgba(255,255,255,.10);
+      --dashBgSoft: rgba(255,255,255,.04);
+    }
+    body { color: var(--dashText); }
+    .small { color: var(--dashText2); }
+
+    .row{
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .row > div{
+      min-width: 180px;
+      flex: 1 1 180px;
+    }
+
+    select, input[type="date"], input[type="email"], input[type="password"]{
+      border: 1px solid var(--dashBorder);
+      background: var(--dashBgSoft);
+      color: var(--dashText);
+    }
+    label{
+      color: var(--dashText2);
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+
+    #customDateRange{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px dashed var(--dashBorder);
+      border-radius: 12px;
+      background: rgba(0,0,0,.08);
+    }
+    #customDateRange.hidden{ display:none; }
+
+    .chartWrap{
+      height: 320px;
+      border: 1px solid var(--dashBorder);
+      border-radius: 16px;
+      background: rgba(0,0,0,.06);
+      padding: 10px;
+    }
+
+    pre#table{
+      border: 1px solid var(--dashBorder);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.06);
+      color: var(--dashText);
+    }
+  </style>
 </head>
+
 <body>
 <header>
   <div class="bar">
@@ -25,7 +86,6 @@
 
 <div class="container">
 
-  <!-- ניווט מהיר (חדש) -->
   <div class="card">
     <h3>ניווט מהיר</h3>
     <div class="small">לצפייה בכל הביקורות והתרגילים בטבלה (כולל ציונים, הערות ותאריך) עבור מנהלים.</div>
@@ -34,7 +94,6 @@
     </div>
   </div>
 
-  <!-- כרטיס התחברות מנהל -->
   <div class="card" id="loginCard">
     <h3>התחברות מנהל</h3>
 
@@ -54,10 +113,11 @@
   </div>
 
   <div class="card">
-    <h3>פילטרים כמותיים</h3>
+    <h3>פילטרים</h3>
+
     <div class="row">
       <div>
-        <label>חתך לפי</label>
+        <label>חתך לפי (הצגת הגרף)</label>
         <select id="groupBy">
           <option value="type">סוג</option>
           <option value="sector">גזרה</option>
@@ -65,25 +125,66 @@
           <option value="name">שם מבצע</option>
         </select>
       </div>
+
       <div>
-        <label>טווח ימים אחורה</label>
+        <label>גזרה</label>
+        <select id="sectorFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
+        <label>סוג</label>
+        <select id="typeFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
+        <label>תפקיד</label>
+        <select id="roleFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
+        <label>טווח</label>
         <select id="daysBack">
-          <option value="7">7</option>
-          <option value="30" selected>30</option>
-          <option value="90">90</option>
-          <option value="365">365</option>
+          <option value="7">7 ימים</option>
+          <option value="30" selected>30 ימים</option>
+          <option value="90">90 ימים</option>
+          <option value="365">365 ימים</option>
+          <option value="custom">מותאם</option>
         </select>
       </div>
     </div>
-    <div class="actions">
+
+    <div id="customDateRange" class="hidden" style="margin-top:10px">
+      <div>
+        <label>מתאריך</label>
+        <input type="date" id="dateFrom"/>
+      </div>
+      <div>
+        <label>עד תאריך</label>
+        <input type="date" id="dateTo"/>
+      </div>
+      <div class="small" style="grid-column:1 / -1">
+        טיפ: אם לא בוחרים תאריך-סיום, נשתמש ב"היום".
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:10px">
       <button class="primary" id="loadBtn">טען סטטיסטיקות</button>
     </div>
+
     <div class="small" id="dashStatus"></div>
   </div>
 
   <div class="card">
     <h3>גרף</h3>
-    <canvas id="chart" height="160"></canvas>
+    <div class="chartWrap">
+      <canvas id="chart"></canvas>
+    </div>
   </div>
 
   <div class="card">
