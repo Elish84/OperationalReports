@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>רשימת ביקורות ותרגילים</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">🗂️ רשימת דוחות</div>
+      <div class="badge">גישה למנהלים בלבד</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד</button></a>
+      <button class="primary" id="loginBtn">התחברות</button>
+      <button class="danger hidden" id="logoutBtn">התנתקות</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>התחברות מנהל</h3>
+    <label>אימייל</label>
+    <input id="adminEmail" type="email" placeholder="name@example.com" autocomplete="username"/>
+
+    <label>סיסמה</label>
+    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+    <div class="actions">
+      <button class="primary" id="loginBtnInline">התחברות</button>
+      <button class="danger hidden" id="logoutBtnInline">התנתקות</button>
+    </div>
+
+    <div class="small" id="loginStatus">🔒 לא מחובר</div>
+  </div>
+
+  <div class="card">
+    <h3>פילטרים</h3>
+
+    <div class="row">
+      <div>
+        <label>סוג</label>
+        <select id="filterType">
+          <option value="">הכל</option>
+          <option value="ביקורת קצה מבצעי">ביקורת קצה מבצעי</option>
+          <option value="תרגול משימה">תרגול משימה</option>
+          <option value="תרגיל מסגרתי אורגני">תרגיל מסגרתי אורגני</option>
+          <option value="תרגיל משולב כוחות">תרגיל משולב כוחות</option>
+        </select>
+      </div>
+
+      <div>
+        <label>גזרה</label>
+        <select id="filterSector">
+          <option value="">הכל</option>
+          <option value="אלון מורה">אלון מורה</option>
+          <option value="איתמר">איתמר</option>
+          <option value="ברכה">ברכה</option>
+          <option value="לב השומרון">לב השומרון</option>
+          <option value="אחר">אחר</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>חיפוש בשם מבצע</label>
+        <input id="filterName" placeholder="לדוגמה: אלי"/>
+      </div>
+
+      <div>
+        <label>ימים אחורה</label>
+        <select id="filterDays">
+          <option value="7">7</option>
+          <option value="30" selected>30</option>
+          <option value="90">90</option>
+          <option value="365">365</option>
+          <option value="3650">הכל</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="loadBtn">טען רשומה</button>
+      <button id="moreBtn" class="hidden">טען עוד</button>
+    </div>
+
+    <div class="small" id="listStatus"></div>
+  </div>
+
+  <div class="card">
+    <h3>רשימה</h3>
+
+    <div style="overflow:auto">
+      <table class="tbl" id="tbl">
+        <thead>
+          <tr>
+            <th>תאריך</th>
+            <th>סוג</th>
+            <th>גזרה</th>
+            <th>שם</th>
+            <th>תפקיד</th>
+            <th>כוח</th>
+            <th>ציון (0-100)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="small">* במובייל אפשר לגלול אופקית.</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modalBackdrop" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:14px;z-index:9999">
+  <div class="card" style="max-width:720px;width:100%;max-height:85vh;overflow:auto">
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+      <h3 style="margin:0">פרטי דוח</h3>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+        <button id="editModalBtn">עריכה</button>
+        <button class="danger" id="deleteModalBtn">מחיקה</button>
+        <button id="closeModalBtn">סגור</button>
+      </div>
+    </div>
+    <div class="small" id="modalMeta"></div>
+    <hr/>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script type="module" src="js/reports.js"></script>
+</body>
+</html>
