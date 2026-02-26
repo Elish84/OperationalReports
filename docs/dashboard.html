@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>דשבורד סטטיסטיקות</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Visual improvements (light text + better filter layout) -->
+  <style>
+    :root{
+      --dashText: rgba(255,255,255,.92);
+      --dashText2: rgba(255,255,255,.72);
+      --dashBorder: rgba(255,255,255,.10);
+      --dashBgSoft: rgba(255,255,255,.04);
+    }
+    body { color: var(--dashText); }
+    .small { color: var(--dashText2); }
+
+    .row{
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .row > div{
+      min-width: 180px;
+      flex: 1 1 180px;
+    }
+
+    select, input[type="date"], input[type="email"], input[type="password"]{
+      border: 1px solid var(--dashBorder);
+      background: var(--dashBgSoft);
+      color: var(--dashText);
+    }
+    textarea{
+      border: 1px solid var(--dashBorder);
+      background: var(--dashBgSoft);
+      color: var(--dashText);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    label{
+      color: var(--dashText2);
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+
+    #customDateRange{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px dashed var(--dashBorder);
+      border-radius: 12px;
+      background: rgba(0,0,0,.08);
+    }
+    #customDateRange.hidden{ display:none; }
+
+    .chartWrap{
+      height: 320px;
+      border: 1px solid var(--dashBorder);
+      border-radius: 16px;
+      background: rgba(0,0,0,.06);
+      padding: 10px;
+    }
+
+    pre#table{
+      border: 1px solid var(--dashBorder);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.06);
+      color: var(--dashText);
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">📊 דשבורד סטטיסטיקות</div>
+      <div class="badge">גישה רק למנהלים מורשים (Email/Password)</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
+      <button class="primary" id="loginBtn">התחברות מנהל</button>
+      <button class="danger hidden" id="logoutBtn">התנתקות</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>ניווט מהיר</h3>
+    <div class="small">לצפייה בכל הביקורות והתרגילים בטבלה (כולל ציונים, הערות ותאריך) עבור מנהלים.</div>
+    <div class="actions">
+      <a href="reports.html" style="text-decoration:none"><button class="primary">פתח רשימת רשומות 🗂️</button></a>
+    </div>
+  </div>
+
+  <div class="card" id="loginCard">
+    <h3>התחברות מנהל</h3>
+
+    <label>אימייל</label>
+    <input id="adminEmail" type="email" placeholder="name@example.com" autocomplete="username"/>
+
+    <label>סיסמה</label>
+    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+
+    <div class="actions">
+      <button class="primary" id="loginBtnInline">התחברות</button>
+      <button class="danger hidden" id="logoutBtnInline">התנתקות</button>
+    </div>
+
+    <div class="small" id="loginStatus">🔒 לא מחובר</div>
+    <div class="small">* רק משתמשים שמופיעים ברשימת <b>admins</b> יראו סטטיסטיקות ורשומות.</div>
+  </div>
+
+  <div class="card">
+    <h3>פילטרים</h3>
+
+    <div class="row">
+      <div>
+        <label>סוג</label>
+        <select id="typeFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
+        <label>טווח</label>
+        <select id="daysBack">
+          <option value="7">7 ימים</option>
+          <option value="30" selected>30 ימים</option>
+          <option value="90">90 ימים</option>
+          <option value="365">365 ימים</option>
+          <option value="custom">מותאם</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="customDateRange" class="hidden" style="margin-top:10px">
+      <div>
+        <label>מתאריך</label>
+        <input type="date" id="dateFrom"/>
+      </div>
+      <div>
+        <label>עד תאריך</label>
+        <input type="date" id="dateTo"/>
+      </div>
+      <div class="small" style="grid-column:1 / -1">
+        טיפ: אם לא בוחרים תאריך-סיום, נשתמש ב"היום".
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:10px">
+      <button class="primary" id="loadBtn">טען סטטיסטיקות</button>
+      <button id="waExportBtn">📱 יצוא לוואטסאפ</button>
+    </div>
+
+    <div class="small" id="dashStatus"></div>
+  </div>
+
+  <div class="card">
+    <h3>גרפים לפי גזרות</h3>
+    <div class="small">כל גרף מציג חלוקה לפי סוגי תרגילים + כמה בוצעו ע"י צמ"מ וכמה ע"י מפקדים/אחרים.</div>
+  </div>
+
+  <div class="card">
+    <h3>אלון מורה</h3>
+    <div class="chartWrap"><canvas id="chart_sector_0"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>איתמר</h3>
+    <div class="chartWrap"><canvas id="chart_sector_1"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>ברכה</h3>
+    <div class="chartWrap"><canvas id="chart_sector_2"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>לב השומרון</h3>
+    <div class="chartWrap"><canvas id="chart_sector_3"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h3>טבלת ספירות</h3>
+    <pre id="table" style="white-space:pre-wrap"></pre>
+  </div>
+
+  <div class="card">
+    <h3>טקסט לוואטסאפ</h3>
+    <div class="small">לחיצה על "יצוא לוואטסאפ" תייצר את הטקסט ותעתיק ללוח. כאן תראה גם את התוכן.</div>
+    <textarea id="waText" style="width:100%;min-height:160px"></textarea>
+    <div class="actions" style="margin-top:10px">
+      <button id="copyWaBtn">📋 העתק טקסט</button>
+      <a id="openWaLink" href="#" style="text-decoration:none" target="_blank" rel="noopener">
+        <button class="primary">פתח וואטסאפ</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // סנכרון בין זוג כפתורי header לזוג הכפתורים בתוך הכרטיס
+  const bind = (srcId, dstId) => {
+    const src = document.getElementById(srcId);
+    const dst = document.getElementById(dstId);
+    if (src && dst) src.addEventListener("click", () => dst.click());
+  };
+
+  bind("loginBtn", "loginBtnInline");
+  bind("logoutBtn", "logoutBtnInline");
+</script>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
