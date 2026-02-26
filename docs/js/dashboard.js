@@ -370,6 +370,9 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
 
     // 🔧 strict definition: tzmm <=> role === 'צמ"מ'
     const role = (data?.role || "").trim();
+    if (kept < 5) {
+  console.log("SAMPLE role root:", data?.role, "meta:", data?.meta?.role);
+}
     const isTzmm = role === 'צמ"מ';
 
     typesSet.add(type);
