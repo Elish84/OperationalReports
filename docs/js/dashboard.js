@@ -345,7 +345,17 @@ function computeRange() {
 
   return { fromDate, toDateEnd, rangeLabel };
 }
+function normalizeRole(v) {
+  return String(v || "")
+    .trim()
+    // normalize Hebrew / smart quotes to regular double quote
+    .replace(/[״“”]/g, '"');
+}
 
+function readRole(data) {
+  // support both schemas: role on root OR under meta.role
+  return normalizeRole(data?.role || data?.meta?.role);
+}
 // ✅ FIXED: role is on root: data.role
 function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
   const bySector = {};
@@ -369,7 +379,7 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
     if (typeFilter && type !== typeFilter) continue;
 
     // 🔧 strict definition: tzmm <=> role === 'צמ"מ'
-    const role = (data?.role || "").trim();
+   const role = readRole(data);
     if (kept < 5) {
   console.log("SAMPLE role root:", data?.role, "meta:", data?.meta?.role);
 }
