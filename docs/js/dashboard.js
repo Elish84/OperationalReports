@@ -1,4 +1,5 @@
 // public/js/dashboard.js (v3 - 4-sector charts + WhatsApp export)
+// FIX: Count "צמ\"מ" strictly by record.role === 'צמ"מ' (not meta.role)
 import { db } from "./firebase-init.js";
 import { loginEmailPassword, logout, watchAuth } from "./auth.js";
 import {
@@ -115,7 +116,7 @@ function renderChartForSector(canvasId, sectorName, labels, countsByType) {
       labels,
       datasets: [
         {
-          label: "צמ\"מ",
+          label: 'צמ"מ',
           data: dataTzmm,
           borderWidth: 1,
           borderRadius: 10,
@@ -345,6 +346,7 @@ function computeRange() {
   return { fromDate, toDateEnd, rangeLabel };
 }
 
+// ✅ FIXED: role is on root: data.role
 function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
   const bySector = {};
   SECTORS.forEach((s) => {
@@ -366,8 +368,9 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
     const type = data?.type || "לא ידוע";
     if (typeFilter && type !== typeFilter) continue;
 
-    const role = (data?.meta?.role || "").trim();
-    const isTzmm = role === "צמ\"מ";
+    // 🔧 strict definition: tzmm <=> role === 'צמ"מ'
+    const role = (data?.role || "").trim();
+    const isTzmm = role === 'צמ"מ';
 
     typesSet.add(type);
     const bucket = bySector[sector];
