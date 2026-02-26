@@ -1,7 +1,4 @@
-// public/js/dashboard.js
-// v4 - supports:
-// - strict צמ"מ counting
-// - practical drill inside "ביקורת קצה מבצעי" also counted as "תרגול משימה"
+// public/js/dashboard.js (v4 - fixed sector/role + improved WA export)
 
 import { db } from "./firebase-init.js";
 import { loginEmailPassword, logout, watchAuth } from "./auth.js";
@@ -23,6 +20,7 @@ const daysSelect = el("daysBack");
 const customRange = el("customDateRange");
 const dateFrom = el("dateFrom");
 const dateTo = el("dateTo");
+
 const waTextEl = el("waText");
 
 Chart.defaults.color = "rgba(255,255,255,0.92)";
@@ -31,34 +29,17 @@ Chart.defaults.font.size = 13;
 
 const SECTORS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון"];
 const OTHER_LABEL = "אחרים";
-const DRILL_LABEL = "תרגול משימה";
 
 const charts = new Map();
 let lastAgg = null;
 
-/* ==============================
-   Helpers
-================================ */
+// ----------------------
+// Utilities
+// ----------------------
 
-function normalizeRole(v) {
-  return String(v || "")
-    .trim()
-    .replace(/[״“”]/g, '"');
-}
-
-function readRole(data) {
-  return normalizeRole(data?.role || data?.meta?.role);
-}
-
-function isPracticalDrill(data) {
-  const v =
-    data?.sections?.training?.kind ||
-    data?.sections?.forceTraining?.kind ||
-    data?.meta?.trainingKind ||
-    data?.trainingKind ||
-    data?.forceTrainingType;
-
-  return String(v || "").trim() === "מעשי";
+function isoDate(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function toDateMaybe(ts) {
@@ -75,11 +56,97 @@ function getEventDate(d) {
   return toDateMaybe(d?.eventAt) || toDateMaybe(d?.createdAt);
 }
 
-/* ==============================
-   Aggregation
-================================ */
+function normalizeRole(v) {
+  return String(v || "")
+    .trim()
+    .replace(/[״“”]/g, '"');
+}
 
-function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
+function readRole(data) {
+  return normalizeRole(data?.role || data?.meta?.role);
+}
+
+function readSector(data) {
+  return String(data?.sector || data?.meta?.sector || "").trim();
+}
+
+// ----------------------
+// Auth
+// ----------------------
+
+watchAuth((u) => {
+  ["loginBtn", "loginBtnInline"].forEach((id) =>
+    el(id)?.classList.toggle("hidden", !!u)
+  );
+  ["logoutBtn", "logoutBtnInline"].forEach((id) =>
+    el(id)?.classList.toggle("hidden", !u)
+  );
+  if (loginStatus)
+    loginStatus.textContent = u
+      ? `✅ מחובר: ${u.email || "anonymous"}`
+      : "🔒 לא מחובר";
+});
+
+async function doLogin() {
+  try {
+    loginStatus.textContent = "מתחבר...";
+    const email = el("adminEmail")?.value?.trim();
+    const pass = el("adminPass")?.value;
+    await loginEmailPassword(email, pass);
+    loginStatus.textContent = "✅ התחברת";
+  } catch (e) {
+    console.error(e);
+    loginStatus.textContent = "❌ התחברות נכשלה";
+  }
+}
+
+async function doLogout() {
+  await logout();
+  loginStatus.textContent = "התנתקת";
+  charts.forEach((c) => c.destroy());
+  charts.clear();
+  el("table").textContent = "";
+  dashStatus.textContent = "";
+  lastAgg = null;
+}
+
+el("loginBtn")?.addEventListener("click", doLogin);
+el("logoutBtn")?.addEventListener("click", doLogout);
+
+// ----------------------
+// Data Fetch
+// ----------------------
+
+async function fetchAllReviews(maxDocs = 5000) {
+  const all = [];
+  let cursor = null;
+
+  while (all.length < maxDocs) {
+    const parts = [
+      collection(db, "reviews"),
+      orderBy("createdAt", "desc"),
+      limit(500),
+    ];
+    if (cursor) parts.splice(parts.length - 1, 0, startAfter(cursor));
+    const qRef = query(...parts);
+    const snap = await getDocs(qRef);
+
+    snap.docs.forEach((d) =>
+      all.push({ id: d.id, data: d.data() })
+    );
+
+    if (snap.docs.length < 500) break;
+    cursor = snap.docs[snap.docs.length - 1];
+  }
+
+  return all;
+}
+
+// ----------------------
+// Aggregate
+// ----------------------
+
+function aggregate(docs, { fromDate, toDateEnd }) {
   const bySector = {};
   SECTORS.forEach((s) => {
     bySector[s] = { byType: {}, totals: { tzmm: 0, other: 0 } };
@@ -94,45 +161,25 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
     if (ev < fromDate) continue;
     if (toDateEnd && ev > toDateEnd) continue;
 
-    const sector = data?.meta?.sector || "";
+    const sector = readSector(data);
     if (!SECTORS.includes(sector)) continue;
 
-    const baseType = data?.type || "לא ידוע";
-    if (typeFilter && baseType !== typeFilter) continue;
-
+    const type = data?.type || "לא ידוע";
     const role = readRole(data);
     const isTzmm = role === 'צמ"מ';
 
+    typesSet.add(type);
     const bucket = bySector[sector];
-    if (!bucket.byType[baseType]) {
-      bucket.byType[baseType] = { tzmm: 0, other: 0 };
-    }
 
-    // ספירה רגילה
+    if (!bucket.byType[type])
+      bucket.byType[type] = { tzmm: 0, other: 0 };
+
     if (isTzmm) {
-      bucket.byType[baseType].tzmm++;
+      bucket.byType[type].tzmm++;
       bucket.totals.tzmm++;
     } else {
-      bucket.byType[baseType].other++;
+      bucket.byType[type].other++;
       bucket.totals.other++;
-    }
-
-    typesSet.add(baseType);
-
-    // 🔥 לוגיקה חדשה:
-    // אם זו ביקורת קצה מבצעי ויש תרגול מעשי → נספור גם כתרגול משימה
-    if (baseType === "ביקורת קצה מבצעי" && isPracticalDrill(data)) {
-      if (!bucket.byType[DRILL_LABEL]) {
-        bucket.byType[DRILL_LABEL] = { tzmm: 0, other: 0 };
-      }
-
-      if (isTzmm) {
-        bucket.byType[DRILL_LABEL].tzmm++;
-      } else {
-        bucket.byType[DRILL_LABEL].other++;
-      }
-
-      typesSet.add(DRILL_LABEL);
     }
 
     kept++;
@@ -141,57 +188,133 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
   return { bySector, types: [...typesSet].sort(), kept };
 }
 
-/* ==============================
-   Data Fetch
-================================ */
+// ----------------------
+// Charts
+// ----------------------
 
-async function fetchAllReviews(maxDocs = 5000) {
-  const all = [];
-  let cursor = null;
+function renderChartForSector(canvasId, sectorName, labels, countsByType) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
 
-  while (all.length < maxDocs) {
-    const parts = [
-      collection(db, "reviews"),
-      orderBy("createdAt", "desc"),
-      limit(500),
-    ];
-    if (cursor) parts.splice(parts.length - 1, 0, startAfter(cursor));
+  charts.get(canvasId)?.destroy();
 
-    const qRef = query(...parts);
-    const snap = await getDocs(qRef);
+  const chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'צמ"מ',
+          data: labels.map((t) => countsByType[t]?.tzmm || 0),
+          stack: "s",
+        },
+        {
+          label: OTHER_LABEL,
+          data: labels.map((t) => countsByType[t]?.other || 0),
+          stack: "s",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+    },
+  });
 
-    snap.docs.forEach((d) => all.push({ id: d.id, data: d.data() }));
-    if (snap.docs.length < 500) break;
-
-    cursor = snap.docs[snap.docs.length - 1];
-  }
-
-  return all;
+  charts.set(canvasId, chart);
 }
 
-/* ==============================
-   Load button
-================================ */
+// ----------------------
+// WhatsApp
+// ----------------------
 
-document.getElementById("loadBtn")?.addEventListener("click", async () => {
+function buildWhatsappText(agg, rangeLabel) {
+  let totalTzmm = 0;
+  let totalOther = 0;
+
+  for (const sector of SECTORS) {
+    const sec = agg.bySector[sector];
+    totalTzmm += sec.totals.tzmm;
+    totalOther += sec.totals.other;
+  }
+
+  const grand = totalTzmm + totalOther;
+  const lines = [];
+
+  lines.push(`📊 סטאטוס ביקורות/תרגילים`);
+  lines.push(`🗓️ ${rangeLabel}`);
+  lines.push(`🦉 ${totalTzmm} | 🪖 ${totalOther}  (סה"כ ${grand})`);
+  lines.push("");
+
+  for (const sector of SECTORS) {
+    const sec = agg.bySector[sector];
+    const tz = sec.totals.tzmm;
+    const ot = sec.totals.other;
+    const tot = tz + ot;
+    if (!tot) continue;
+
+    lines.push(`📍 *${sector}* — 🦉${tz} | 🪖${ot} (${tot})`);
+
+    for (const t of agg.types) {
+      const c = sec.byType[t];
+      if (!c) continue;
+      const tt = c.tzmm + c.other;
+      if (!tt) continue;
+
+      lines.push(`   • ${t}: 🦉${c.tzmm} | 🪖${c.other} (${tt})`);
+    }
+
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+// ----------------------
+// Main Load
+// ----------------------
+
+el("loadBtn")?.addEventListener("click", async () => {
   try {
     dashStatus.textContent = "טוען...";
+    const docs = await fetchAllReviews();
 
-    const typeFilter = el("typeFilter")?.value || "";
     const fromDate = new Date(Date.now() - 30 * 86400000);
+    const toDateEnd = new Date();
 
-    const docs = await fetchAllReviews(5000);
+    const agg = aggregate(docs, { fromDate, toDateEnd });
+    lastAgg = agg;
 
-    const agg0 = aggregate(docs, { fromDate, typeFilter });
-    lastAgg = {
-      ...agg0,
-      fetched: docs.length,
-    };
+    const labels = agg.types.length ? agg.types : ["אין נתונים"];
 
-    dashStatus.textContent = `✅ נטען · ${lastAgg.kept} רשומות`;
+    SECTORS.forEach((s, i) => {
+      renderChartForSector(
+        `chart_sector_${i}`,
+        s,
+        labels,
+        agg.bySector[s].byType
+      );
+    });
+
+    dashStatus.textContent = `✅ נטען ${agg.kept} רשומות`;
 
   } catch (e) {
     console.error(e);
-    dashStatus.textContent = "❌ שגיאה בטעינת נתונים";
+    dashStatus.textContent = "❌ שגיאה בטעינה";
   }
+});
+
+// ----------------------
+// WA Export
+// ----------------------
+
+el("waExportBtn")?.addEventListener("click", async () => {
+  if (!lastAgg) return;
+
+  const txt = buildWhatsappText(lastAgg, "30 ימים אחרונים");
+  waTextEl.value = txt;
+
+  await navigator.clipboard.writeText(txt);
+  dashStatus.textContent = "📋 הועתק לוואטסאפ";
 });
