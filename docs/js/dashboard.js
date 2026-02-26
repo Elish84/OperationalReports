@@ -145,8 +145,7 @@ async function fetchAllReviews(maxDocs = 5000) {
 // ----------------------
 // Aggregate
 // ----------------------
-
-function aggregate(docs, { fromDate, toDateEnd }) {
+function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
   const bySector = {};
   SECTORS.forEach((s) => {
     bySector[s] = { byType: {}, totals: { tzmm: 0, other: 0 } };
@@ -168,26 +167,54 @@ function aggregate(docs, { fromDate, toDateEnd }) {
     const role = readRole(data);
     const isTzmm = role === 'צמ"מ';
 
-    typesSet.add(type);
     const bucket = bySector[sector];
 
-    if (!bucket.byType[type])
-      bucket.byType[type] = { tzmm: 0, other: 0 };
+    // ---- 1️⃣ ספירה רגילה לפי type ----
+    if (!typeFilter || type === typeFilter) {
+      typesSet.add(type);
 
-    if (isTzmm) {
-      bucket.byType[type].tzmm++;
-      bucket.totals.tzmm++;
-    } else {
-      bucket.byType[type].other++;
-      bucket.totals.other++;
+      if (!bucket.byType[type])
+        bucket.byType[type] = { tzmm: 0, other: 0 };
+
+      if (isTzmm) {
+        bucket.byType[type].tzmm++;
+        bucket.totals.tzmm++;
+      } else {
+        bucket.byType[type].other++;
+        bucket.totals.other++;
+      }
+
+      kept++;
     }
 
-    kept++;
+    // ---- 2️⃣ אם זו ביקורת קצה עם תרגול מעשי – לספור גם כ"תרגול משימה" ----
+    const ft = data?.audit?.forceTraining || {};
+    const isPracticalInAudit =
+      data?.type === "ביקורת קצה מבצעי" &&
+      ft.trained === "yes" &&
+      ft.trainingType === "practical";
+
+    if (isPracticalInAudit) {
+      const missionType = "תרגול משימה";
+
+      if (!typeFilter || missionType === typeFilter) {
+        typesSet.add(missionType);
+
+        if (!bucket.byType[missionType])
+          bucket.byType[missionType] = { tzmm: 0, other: 0 };
+
+        if (isTzmm) {
+          bucket.byType[missionType].tzmm++;
+        } else {
+          bucket.byType[missionType].other++;
+        }
+      }
+    }
   }
 
-  return { bySector, types: [...typesSet].sort(), kept };
+  const types = [...typesSet].sort();
+  return { bySector, types, kept };
 }
-
 // ----------------------
 // Charts
 // ----------------------
