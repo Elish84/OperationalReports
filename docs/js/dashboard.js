@@ -225,26 +225,56 @@ function emojiForTotal(n) {
 
 function buildWhatsappText(agg) {
   const lines = [];
-  lines.push(`📊 סטאטוס ביקורות/תרגילים לפי גזרות ${TZ_NOTE}`);
-  lines.push(`🗓️ ${agg.rangeLabel}`);
-  if (agg.typeFilter) lines.push(`🔎 סינון סוג: ${agg.typeFilter}`);
-  lines.push("");
+
+  // ---- Global totals ----
+  let totalTzmm = 0;
+  let totalOther = 0;
 
   for (const sector of SECTORS) {
-    const sec = agg.bySector[sector] || { byType: {}, totals: { tzmm: 0, other: 0 } };
-    const total = (sec.totals.tzmm || 0) + (sec.totals.other || 0);
-    const e = emojiForTotal(total);
-    lines.push(`${e} *${sector}* — 🟢 צמ"מ: ${sec.totals.tzmm || 0} | 🔵 אחרים: ${sec.totals.other || 0} | 📌 סה"כ: ${total}`);
+    const sec = agg.bySector[sector];
+    if (!sec) continue;
+    totalTzmm += sec.totals.tzmm || 0;
+    totalOther += sec.totals.other || 0;
+  }
+
+  const grandTotal = totalTzmm + totalOther;
+
+  lines.push(`📊 סטאטוס ביקורות/תרגילים`);
+  lines.push(`🗓️ ${agg.rangeLabel}`);
+  lines.push(`🦉 צמ"מ: ${totalTzmm} | 🪖 אחרים: ${totalOther}  (סה"כ ${grandTotal})`);
+  lines.push(`מפתח: 🦉 צמ"מ | 🪖 שאר הכוחות`);
+  lines.push("");
+
+  // ---- Per sector ----
+  for (const sector of SECTORS) {
+    const sec = agg.bySector[sector];
+    if (!sec) continue;
+
+    const tz = sec.totals.tzmm || 0;
+    const ot = sec.totals.other || 0;
+    const total = tz + ot;
+
+    if (total === 0) continue;
+
+    // Sector summary line
+    lines.push(`📍 *${sector}* — 🦉${tz} | 🪖${ot}  (${total})`);
+
+    // Per type breakdown (only if exists)
     for (const t of agg.types) {
-      const c = sec.byType[t] || { tzmm: 0, other: 0 };
+      const c = sec.byType[t];
+      if (!c) continue;
+
       const tt = (c.tzmm || 0) + (c.other || 0);
       if (tt === 0) continue;
-      lines.push(`  • ${t}: 🟢${c.tzmm || 0} | 🔵${c.other || 0} (סה"כ ${tt})`);
+
+      lines.push(`   • ${t}: 🦉${c.tzmm || 0} | 🪖${c.other || 0}  (${tt})`);
     }
+
     lines.push("");
   }
 
-  lines.push(`(נמשך מהדשבורד)`);
+  lines.push("(נמשך מהדשבורד)");
+
   return lines.join("\n").trim();
 }
 
