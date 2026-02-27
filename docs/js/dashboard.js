@@ -28,7 +28,7 @@ Chart.defaults.font.family = "system-ui, -apple-system, Segoe UI, Roboto, Arial"
 Chart.defaults.font.size = 13;
 
 const SECTORS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון"];
-const OTHER_LABEL = "אחרים";
+const OTHER_LABEL = "מפקדים";
 
 const charts = new Map();
 let lastAgg = null;
