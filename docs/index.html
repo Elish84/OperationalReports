@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ביקורות ותרגילים-צמ״מ 8109 (v2)</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">📋 ביקורות ותרגילים</div>
+      <div class="badge" id="autoDt"></div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="dashboard.html" style="text-decoration:none">
+        <button class="primary">דשבורד 🔒</button>
+      </a>
+      <a href="reports.html" style="text-decoration:none">
+        <button>רשומות 🗂️</button>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h3>פרטי בסיס</h3>
+    <div class="row">
+      <div>
+        <label>סוג</label>
+        <select id="type">
+          <option>ביקורת קצה מבצעי</option>
+          <option>תרגול משימה</option>
+          <option>תרגיל מסגרתי אורגני</option>
+          <option>תרגיל משולב כוחות</option>
+        </select>
+      </div>
+      <div>
+        <label>גזרה</label>
+        <select id="sector">
+          <option>אלון מורה</option>
+          <option>איתמר</option>
+          <option>ברכה</option>
+          <option>לב השומרון</option>
+          <option>אחר</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>תפקיד</label>
+        <select id="role">
+          <option>צמ״מ</option><option>מג״ד</option><option>סמג״ד</option>
+          <option>מ״פ</option><option>מ״מ</option><option>מ״כ/סמ״ל</option>
+        </select>
+      </div>
+      <div>
+        <label>שם</label>
+        <input id="name" placeholder="לדוגמה: אלי שוקרון"/>
+      </div>
+    </div>
+
+    <label>כוח מתרגל</label>
+    <input id="force" placeholder="שדה חופשי"/>
+
+    <div id="exerciseDescriptionWrap" class="hidden">
+      <label>תיאור התרגול</label>
+      <textarea id="exerciseDescription" placeholder="מה תרגלתם? מטרות, תרחיש, דגשים, תוצרים..."></textarea>
+    </div>
+  </div>
+
+  <div id="auditCard" class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
+      <div>
+        <h3 style="margin:0 0 6px 0">ביקורת קצה מבצעי (v2)</h3>
+        <div class="small">דירוג מהיר לפי “רמזור”: 🔴=גרוע · ⚠️=בינוני · 🙂=טוב · ✅=טוב מאוד · 🟢=מצוין</div>
+      </div>
+      <div class="badge" id="scoreBadge">ציון סופי: —</div>
+    </div>
+
+    <div class="small" id="scoreBreakdown" style="margin-top:6px"></div>
+    <hr/>
+
+    <h4 style="margin:0 0 8px 0">📌 מבצעיות (80%)</h4>
+    <label>1. מיקום העמדה + שפה משותפת + הכרת הגזרה</label><select id="r1"></select>
+    <label>2. תדריך משימה (תוכן, מתי בוצע, חילופים/נוהל)</label><select id="r2"></select>
+    <label>3. היסטוריה גזרתית (אירועי דגל)</label><select id="r3"></select>
+    <label>4. הבנת האיום (איומים, נק׳ תורפה, שטחים מאיימים, דפ״א)</label><select id="r4"></select>
+    <label>5. נראות ודיגום הכוח</label><select id="r5"></select>
+    <label>6. עקרון המאמ״ץ (מיגון/צפיפות/ערנות/מודעות)</label><select id="r6"></select>
+    <label>7. תרגולות ומקת״גים (מתודי/מעשי)</label><select id="r7"></select>
+    <label>8. הופ״א (הוראות פתיחה באש)</label><select id="r8"></select>
+
+    <div class="row">
+      <div>
+        <label>תרגול הכוח</label>
+        <select id="forceTrained">
+          <option value="">בחר</option>
+          <option value="yes">כן</option>
+          <option value="no">לא</option>
+        </select>
+      </div>
+
+      <div id="forceTrainingTypeWrap" class="hidden">
+        <label>סוג תרגול</label>
+        <select id="forceTrainingType">
+          <option value="">בחר</option>
+          <option value="methodical">מתודי</option>
+          <option value="practical">מעשי</option>
+        </select>
+      </div>
+    </div>
+
+    <hr/>
+    <h4 style="margin:0 0 8px 0">📌 תקשוב (10%)</h4>
+    <label>9. ליונט/תיק משימה/אלפ״א/משיב מיקום</label><select id="r9"></select>
+    <label>10. קשר (קליטה, האזנה+דיבור, תדרים רלוונטיים)</label><select id="r10"></select>
+
+    <hr/>
+    <h4 style="margin:0 0 8px 0">📌 מודיעין (5%)</h4>
+    <label>11. עזרים בעמדה (תצ״א/כרטיס טווחים/מפה)</label><select id="r11"></select>
+
+    <hr/>
+    <h4 style="margin:0 0 8px 0">📌 רפואה (5%)</h4>
+    <label>12. רפואה (ח״ע+ערכה+תרגולת)</label><select id="r12"></select>
+  </div>
+
+  <div class="card">
+    <h3>הערות</h3>
+
+    <label>פערים שעלו מהכוח</label>
+    <textarea id="gaps" placeholder="לדוגמה: אמ״ל"></textarea>
+
+    <label>הערות נוספות</label>
+    <textarea id="notes" placeholder="טקסט חופשי"></textarea>
+
+    <div class="row">
+      <div>
+        <label>נקודות לשימור (עד 3)</label>
+        <input id="keep1" placeholder="1"/>
+        <input id="keep2" placeholder="2"/>
+        <input id="keep3" placeholder="3"/>
+      </div>
+      <div>
+        <label>נקודות לשיפור (עד 3)</label>
+        <input id="imp1" placeholder="1"/>
+        <input id="imp2" placeholder="2"/>
+        <input id="imp3" placeholder="3"/>
+      </div>
+    </div>
+
+    <label>תמונות (יישמרו בתוך ה־PDF בלבד)</label>
+    <input id="photos" type="file" accept="image/*" multiple />
+    <div class="small">* אם תרצה גם העלאה ל-Firebase Storage (מאובטח) אפשר להוסיף בשלב הבא.</div>
+
+    <div class="actions">
+      <button class="primary" id="saveBtn">💾📱 שמירה ויצוא לוואטסאפ</button>
+      <button id="pdfBtn">🧾 PDF (כולל תמונות)</button>
+    </div>
+
+    <div class="small" id="statusLine"></div>
+  </div>
+</div>
+
+<script type="module" src="js/ui.js"></script>
+<script type="module" src="js/form.js"></script>
+</body>
+</html>
