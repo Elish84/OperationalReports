@@ -1,4 +1,5 @@
-// public/js/form.js (v2) - FIX: robust DOM reads for non-admin users
+
+// public/js/form.js (v2) - FIX: robust DOM reads for non-admin users + mobile WhatsApp fallback
 import { db } from "./firebase-init.js";
 import { ensureAnon } from "./auth.js";
 import {
@@ -236,7 +237,7 @@ async function readPhotosAsDataUrls(files) {
   return arr;
 }
 
-// כפתור מאוחד: שמירה + יצוא לוואטסאפ (העתקה ללוח)
+// כפתור מאוחד: שמירה + יצוא לוואטסאפ (העתקה ללוח) + fallback למובייל
 el("saveBtn")?.addEventListener("click", async () => {
   try {
     await ensureAnon();
@@ -250,12 +251,27 @@ el("saveBtn")?.addEventListener("click", async () => {
     const baseTxt = buildWhatsappText(data);
     const txt = baseTxt + `\n\n🆔 מזהה רשומה: ${res.id}`;
 
-    await navigator.clipboard.writeText(txt);
+    // ✅ Try clipboard first (desktop usually OK; mobile sometimes blocked)
+    try {
+      await navigator.clipboard.writeText(txt);
 
-    if (statusLine) {
-      statusLine.textContent = res.isDuplicate
-        ? `📋 נשמר בעבר (נמנע כפילות) + הועתק לוואטסאפ. מזהה: ${res.id}`
-        : `📋 נשמר אוטומטית + הועתק לוואטסאפ. מזהה: ${res.id}`;
+      if (statusLine) {
+        statusLine.textContent = res.isDuplicate
+          ? `📋 נשמר בעבר (נמנע כפילות) + הועתק לוואטסאפ. מזהה: ${res.id}`
+          : `📋 נשמר אוטומטית + הועתק לוואטסאפ. מזהה: ${res.id}`;
+      }
+    } catch (err) {
+      console.warn("[form] Clipboard failed, fallback to WhatsApp deep link:", err);
+
+      // ✅ Fallback: open WhatsApp with prefilled text (works well on mobile Chrome)
+      const waUrl = "https://wa.me/?text=" + encodeURIComponent(txt);
+      window.location.href = waUrl;
+
+      if (statusLine) {
+        statusLine.textContent = res.isDuplicate
+          ? `📲 נשמר בעבר (נמנע כפילות). פותח וואטסאפ… מזהה: ${res.id}`
+          : `📲 נשמר. פותח וואטסאפ… מזהה: ${res.id}`;
+      }
     }
   } catch (e) {
     console.error(e);
@@ -274,3 +290,4 @@ el("pdfBtn")?.addEventListener("click", async () => {
     if (statusLine) statusLine.textContent = "❌ יצוא PDF נכשל";
   }
 });
+
