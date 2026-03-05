@@ -1,11 +1,13 @@
 // public/js/form.js (v2)
 import { db } from "./firebase-init.js";
 import { ensureAnon } from "./auth.js";
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { buildWhatsappText, exportPdf } from "./pdf.js";
 
 const el = (id) => document.getElementById(id);
-const statusLine = el("statusLine");async function sha256Hex(str) {
+const statusLine = el("statusLine");
+
+async function sha256Hex(str) {
   const buf = new TextEncoder().encode(str);
   const hashBuf = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,"0")).join("");
@@ -25,18 +27,22 @@ async function saveIfNeeded(baseData) {
 
   const hash = await sha256Hex(stableStringify(dataForHash));
 
-  const q = query(collection(db, "reviews"), where("hash", "==", hash));
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    return { id: snap.docs[0].id, isDuplicate: true };
+  // ✅ ללא קריאה ל-DB (קריאות נחסמות ללוחמים לפי ה-Rules)
+  // נשתמש ב-hash בתור docId:
+  // - אם המסמך לא קיים: setDoc הוא CREATE ומותר (signedIn)
+  // - אם המסמך כבר קיים: setDoc הופך ל-UPDATE ונחסם (רק Admin) => נתייחס כ"כפילות"
+  const ref = doc(db, "reviews", hash);
+
+  try {
+    await setDoc(ref, { ...baseData, hash }, { merge: false });
+    return { id: hash, isDuplicate: false };
+  } catch (e) {
+    // אם המסמך קיים כבר (update חסום) נקבל permission-denied -> זו כפילות
+    if (e?.code === "permission-denied") {
+      return { id: hash, isDuplicate: true };
+    }
+    throw e;
   }
-
-  const docRef = await addDoc(collection(db, "reviews"), {
-    ...baseData,
-    hash
-  });
-
-  return { id: docRef.id, isDuplicate: false };
 }
 
 function scoreOrNA(v) {
@@ -140,41 +146,30 @@ function collectData() {
     return base;
   }
 
-  // בביקורת אין שימוש בתיאור תרגול
-  base.exerciseDescription = "";
-
-  // תרגול הכוח
-  const trained = el("forceTrained")?.value || "";
-  const trainingType = el("forceTrainingType")?.value || "";
-
-  base.audit = {
-    // 📌 מבצעיות (80%)
-    posSector: scoreOrNA(el("r1").value),            // 1) מיקום+שפה+גזרה
-    missionBriefing: scoreOrNA(el("r2").value),      // 2) תדריך משימה
-    sectorHistory: scoreOrNA(el("r3").value),        // 3) היסטוריה גזרתית
-    threatUnderstanding: scoreOrNA(el("r4").value),  // 4) הבנת האיום
-    appearance: scoreOrNA(el("r5").value),           // 5) נראות ודיגום
-    effort: scoreOrNA(el("r6").value),               // 6) עקרון המאמ״ץ
-    drills: scoreOrNA(el("r7").value),               // 7) תרגולות ומקת״גים
-    roe: scoreOrNA(el("r8").value),                  // 8) הופ״א
-
-    // 📌 תקשוב (10%)
-    systems: scoreOrNA(el("r9").value),              // 9) ליונט/אלפ״א/תיק משימה
-    communication: scoreOrNA(el("r10").value),       // 10) קשר
-
-    // 📌 מודיעין (5%)
-    intelTools: scoreOrNA(el("r11").value),          // 11) עזרים
-
-    // 📌 רפואה (5%)
-    medical: scoreOrNA(el("r12").value),             // 12) רפואה
-
-    forceTraining: {
-      trained, // "yes" | "no" | ""
-      trainingType: trained === "yes" ? trainingType : "", // "methodical" | "practical" | ""
-    },
+  const audit = {
+    posSector: scoreOrNA(el("posSector").value),
+    missionBriefing: scoreOrNA(el("missionBriefing").value),
+    sectorHistory: scoreOrNA(el("sectorHistory").value),
+    threatUnderstanding: scoreOrNA(el("threatUnderstanding").value),
+    appearance: scoreOrNA(el("appearance").value),
+    effort: scoreOrNA(el("effort").value),
+    drills: scoreOrNA(el("drills").value),
+    roe: scoreOrNA(el("roe").value),
+    systems: scoreOrNA(el("systems").value),
+    communication: scoreOrNA(el("communication").value),
+    intelTools: scoreOrNA(el("intelTools").value),
+    medical: scoreOrNA(el("medical").value),
   };
 
-  base.score = computeScores(base.audit);
+  // NA => null לצורך חישובים
+  const norm = {};
+  for (const [k, v] of Object.entries(audit)) {
+    if (v === "na") norm[k] = null;
+    else norm[k] = Number(v);
+  }
+
+  base.audit = audit;
+  base.score = computeScores(norm);
   return base;
 }
 
@@ -204,9 +199,7 @@ el("saveBtn").addEventListener("click", async () => {
     const res = await saveIfNeeded(data);
 
     const baseTxt = buildWhatsappText(data);
-    const txt = baseTxt + `
-
-🆔 מזהה רשומה: ${res.id}`;
+    const txt = baseTxt + `\n\n🆔 מזהה רשומה: ${res.id}`;
 
     await navigator.clipboard.writeText(txt);
 
