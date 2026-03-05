@@ -1,5 +1,4 @@
-
-// public/js/form.js (v2) - FIX: robust DOM reads for non-admin users + mobile WhatsApp fallback
+// public/js/form.js (v2) - FIX: robust DOM reads for non-admin users + mobile WhatsApp reliable open
 import { db } from "./firebase-init.js";
 import { ensureAnon } from "./auth.js";
 import {
@@ -23,6 +22,10 @@ function warnMissing(ids) {
   if (missing.length) {
     console.warn("[form] Missing elements in DOM (non-fatal):", missing);
   }
+}
+
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
 }
 
 async function sha256Hex(str) {
@@ -52,9 +55,6 @@ async function saveIfNeeded(baseData) {
   const hash = await sha256Hex(stableStringify(dataForHash));
 
   // ✅ ללא קריאה ל-DB (קריאות נחסמות ללוחמים לפי ה-Rules)
-  // נשתמש ב-hash בתור docId:
-  // - אם המסמך לא קיים: setDoc הוא CREATE ומותר (signedIn)
-  // - אם המסמך כבר קיים: setDoc הופך ל-UPDATE ונחסם (רק Admin) => נתייחס כ"כפילות"
   const ref = doc(db, "reviews", hash);
 
   try {
@@ -104,7 +104,6 @@ function computeScores(audit) {
   const intelAvg = avg([audit.intelTools]);
   const medAvg = avg([audit.medical]);
 
-  // משקל יחסי: אם נושא/קבוצה "לא רלוונטיים" – מחלקים מחדש משקל רק בין הקבוצות הרלוונטיות
   const weights = { op: 0.8, tech: 0.1, intel: 0.05, med: 0.05 };
 
   const parts = [
@@ -139,7 +138,6 @@ function computeScores(audit) {
 }
 
 function collectData() {
-  // Debug-only: helps you see what's missing in non-admin DOM
   warnMissing([
     "type",
     "role",
@@ -153,10 +151,8 @@ function collectData() {
     "imp1",
     "imp2",
     "imp3",
-    // optional on some forms
     "exerciseDescription",
     "gaps",
-    // audit fields (present only in audit mode)
     "posSector",
     "missionBriefing",
     "sectorHistory",
@@ -171,7 +167,7 @@ function collectData() {
     "medical"
   ]);
 
-  const type = val("type"); // ✅ safe
+  const type = val("type");
   const isAudit = type === "ביקורת קצה מבצעי";
 
   const base = {
@@ -182,7 +178,6 @@ function collectData() {
       sector: val("sector"),
       force: valTrim("force")
     },
-    // רלוונטי לתרגולים/תרגילים בלבד
     exerciseDescription: valTrim("exerciseDescription"),
     gaps: valTrim("gaps"),
     notes: valTrim("notes"),
@@ -211,7 +206,6 @@ function collectData() {
     medical: scoreOrNA(val("medical"))
   };
 
-  // NA => null לצורך חישובים
   const norm = {};
   for (const [k, v] of Object.entries(audit)) {
     if (v === "na") norm[k] = null;
@@ -237,8 +231,12 @@ async function readPhotosAsDataUrls(files) {
   return arr;
 }
 
-// כפתור מאוחד: שמירה + יצוא לוואטסאפ (העתקה ללוח) + fallback למובייל
+// כפתור מאוחד: שמירה + יצוא לוואטסאפ
 el("saveBtn")?.addEventListener("click", async () => {
+  // ✅ חשוב: במובייל פותחים חלון ריק *מיד* (user gesture) כדי שלא ייחסם אחרי await-ים
+  const shouldPreopen = isMobile();
+  const waWindow = shouldPreopen ? window.open("about:blank", "_blank") : null;
+
   try {
     await ensureAnon();
     const data = collectData();
@@ -248,33 +246,41 @@ el("saveBtn")?.addEventListener("click", async () => {
 
     const res = await saveIfNeeded(data);
 
-    const baseTxt = buildWhatsappText(data);
-    const txt = baseTxt + `\n\n🆔 מזהה רשומה: ${res.id}`;
+    let baseTxt;
+    try {
+      baseTxt = buildWhatsappText(data);
+    } catch (e) {
+      console.error("[form] buildWhatsappText failed:", e);
+      throw e;
+    }
 
-    // ✅ Try clipboard first (desktop usually OK; mobile sometimes blocked)
+    const txt = baseTxt + `\n\n🆔 מזהה רשומה: ${res.id}`;
+    const waUrl = "https://wa.me/?text=" + encodeURIComponent(txt);
+
+    // ניסיון העתקה (Best effort)
     try {
       await navigator.clipboard.writeText(txt);
-
-      if (statusLine) {
-        statusLine.textContent = res.isDuplicate
-          ? `📋 נשמר בעבר (נמנע כפילות) + הועתק לוואטסאפ. מזהה: ${res.id}`
-          : `📋 נשמר אוטומטית + הועתק לוואטסאפ. מזהה: ${res.id}`;
-      }
     } catch (err) {
-      console.warn("[form] Clipboard failed, fallback to WhatsApp deep link:", err);
+      console.warn("[form] Clipboard failed (non-fatal):", err);
+    }
 
-      // ✅ Fallback: open WhatsApp with prefilled text (works well on mobile Chrome)
-      const waUrl = "https://wa.me/?text=" + encodeURIComponent(txt);
+    // ✅ יצוא לוואטסאפ יציב במובייל: אם פתחנו חלון מראש – ננווט אותו
+    if (waWindow && !waWindow.closed) {
+      waWindow.location.href = waUrl;
+    } else {
+      // אם לא הצליח preopen (חסימת popup) – ננסה ניווט רגיל
       window.location.href = waUrl;
+    }
 
-      if (statusLine) {
-        statusLine.textContent = res.isDuplicate
-          ? `📲 נשמר בעבר (נמנע כפילות). פותח וואטסאפ… מזהה: ${res.id}`
-          : `📲 נשמר. פותח וואטסאפ… מזהה: ${res.id}`;
-      }
+    if (statusLine) {
+      statusLine.textContent = res.isDuplicate
+        ? `📲 נשמר בעבר (נמנע כפילות). נפתח וואטסאפ… מזהה: ${res.id}`
+        : `📲 נשמר. נפתח וואטסאפ… מזהה: ${res.id}`;
     }
   } catch (e) {
     console.error(e);
+    // אם פתחנו חלון מראש ולא השתמשנו בו – נסגור כדי לא להשאיר טאב ריק
+    try { if (waWindow && !waWindow.closed) waWindow.close(); } catch (_) {}
     if (statusLine) statusLine.textContent = "❌ שמירה/יצוא לוואטסאפ נכשל";
   }
 });
@@ -290,4 +296,3 @@ el("pdfBtn")?.addEventListener("click", async () => {
     if (statusLine) statusLine.textContent = "❌ יצוא PDF נכשל";
   }
 });
-
