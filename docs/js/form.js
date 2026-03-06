@@ -198,20 +198,20 @@ function collectData() {
     return base;
   }
 
-  const audit = {
-    posSector: scoreOrNA(val("posSector")),
-    missionBriefing: scoreOrNA(val("missionBriefing")),
-    sectorHistory: scoreOrNA(val("sectorHistory")),
-    threatUnderstanding: scoreOrNA(val("threatUnderstanding")),
-    appearance: scoreOrNA(val("appearance")),
-    effort: scoreOrNA(val("effort")),
-    drills: scoreOrNA(val("drills")),
-    roe: scoreOrNA(val("roe")),
-    systems: scoreOrNA(val("systems")),
-    communication: scoreOrNA(val("communication")),
-    intelTools: scoreOrNA(val("intelTools")),
-    medical: scoreOrNA(val("medical"))
-  };
+const audit = {
+  posSector: scoreOrNA(val("r1")),
+  missionBriefing: scoreOrNA(val("r2")),
+  sectorHistory: scoreOrNA(val("r3")),
+  threatUnderstanding: scoreOrNA(val("r4")),
+  appearance: scoreOrNA(val("r5")),
+  effort: scoreOrNA(val("r6")),
+  drills: scoreOrNA(val("r7")),
+  roe: scoreOrNA(val("r8")),
+  systems: scoreOrNA(val("r9")),
+  communication: scoreOrNA(val("r10")),
+  intelTools: scoreOrNA(val("r11")),
+  medical: scoreOrNA(val("r12"))
+};
 
   const norm = {};
   for (const [k, v] of Object.entries(audit)) {
