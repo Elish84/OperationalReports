@@ -71,8 +71,15 @@ async function saveIfNeeded(baseData) {
 
 function scoreOrNA(v) {
   if (v === "na") return "na";
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : null;
+
+  // אם ריק / לא קיים
+  if (v === "" || v === undefined || v === null) return null;
+
+  const n = parseInt(v, 10);
+
+  if (Number.isNaN(n)) return null;
+
+  return n;
 }
 
 function avg(vals) {
