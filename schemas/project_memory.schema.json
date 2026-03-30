@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project Memory",
+  "type": "object",
+  "required": [
+    "project_name",
+    "project_summary",
+    "current_scope",
+    "key_decisions",
+    "active_components",
+    "constraints",
+    "open_items",
+    "recent_changes",
+    "next_steps"
+  ],
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "project_summary": {
+      "type": "string"
+    },
+    "current_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "active_components": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recent_changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

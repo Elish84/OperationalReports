@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Task",
+  "type": "object",
+  "required": [
+    "task_id",
+    "request_id",
+    "title",
+    "owner",
+    "objective",
+    "inputs",
+    "expected_output",
+    "priority",
+    "status"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string",
+      "enum": [
+        "project_manager",
+        "architect",
+        "frontend",
+        "backend",
+        "database",
+        "networking",
+        "security",
+        "qa",
+        "data_analyst",
+        "summarizer"
+      ]
+    },
+    "objective": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_output": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "in_progress",
+        "blocked",
+        "done"
+      ]
+    },
+    "due_hint": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}
