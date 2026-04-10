@@ -21,6 +21,7 @@ const exportModalBtn = el("exportModalBtn");
 const AUDIT_TYPE = "ביקורת קצה מבצעי";
 const HQ_TYPE = "ביקורת חמ״ל";
 const OFFENSIVE_TYPE = "סיכום פעילות התקפית ⚔️";
+const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
 const pad = (n) => String(n).padStart(2,"0");
 const h = (s) => String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 
@@ -31,9 +32,9 @@ let currentRow = null;
 let isEditing = false;
 let isAuthed = false;
 
-const TYPE_OPTIONS = [AUDIT_TYPE, "תרגול משימה", "תרגיל מסגרתי אורגני", "תרגיל משולב כוחות", OFFENSIVE_TYPE, HQ_TYPE];
+const TYPE_OPTIONS = [AUDIT_TYPE, "תרגול משימה", "תרגיל מסגרתי אורגני", "תרגיל משולב כוחות", OFFENSIVE_TYPE, HQ_TYPE, DRONE_TYPE];
 const SECTOR_OPTIONS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון", "אחר"];
-const ROLE_OPTIONS = ["צמ״מ", "מג״ד", "סמג״ד", "מ״פ", "מ״מ", "מ״כ/סמ״ל", "קמב״ץ", "קצין אג״ם", "אחר"];
+const ROLE_OPTIONS = ["צמ״מ", "מג״ד", "סמג״ד", "מ״פ", "מ״מ", "מ״כ/סמ״ל", "קמב״ץ", "קצין אג״ם", "מטיס / נווט", "אחר"];
 const HQ_ITEM_LABELS = {
   shabzak: 'שבצ״ק לפעילויות', initiatedPage: 'דף יזומות פלוגתי', settlementMaps: 'מפות ישובים', crownsProcedure: 'פק״ל כתרים',
   optionsProcedure: 'פקל אופציות', orders: 'סדפ״ים', hardCommunication: 'דרכי תקשורת קשיחים', radioAndMasoah: 'תקינות קשר ומשואה', campDefenseFiles: 'תיקי הגנת מחנה'
@@ -138,7 +139,8 @@ function renderModalView(){
   parts.push(`<div class="small"><b>כוח:</b> ${h(m.force || '—')}</div>`);
 
   if (data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.exerciseDescription) {
-    parts.push(`<div style="margin-top:10px"><b>תיאור התרגול</b></div><div style="white-space:pre-wrap">${h(data.exerciseDescription)}</div>`);
+    const descLabel = data.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+    parts.push(`<div style="margin-top:10px"><b>${descLabel}</b></div><div style="white-space:pre-wrap">${h(data.exerciseDescription)}</div>`);
   }
   if (s) {
     parts.push(`<div class="small" style="margin-top:6px"><b>ציון סופי:</b> ${h(s.overall100 ?? '—')}</div>`);
@@ -255,7 +257,7 @@ function renderModalEdit(){
       <div><label>תפקיד</label>${selectHtml('e_role', ROLE_OPTIONS, m.role || '')}</div>
     </div>
     <label>כוח</label><input id="e_force" value="${h(m.force || '')}" />
-    ${data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.type !== OFFENSIVE_TYPE ? `<label>תיאור התרגול</label><textarea id="e_exDesc">${h(data.exerciseDescription || '')}</textarea>` : ''}
+    ${data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.type !== OFFENSIVE_TYPE ? `<label>${data.type === DRONE_TYPE ? 'תיאור הפעילות' : 'תיאור התרגול'}</label><textarea id="e_exDesc">${h(data.exerciseDescription || '')}</textarea>` : ''}
     ${data.type === AUDIT_TYPE ? renderAuditEdit(data.audit || {}) : ''}
     ${data.type === OFFENSIVE_TYPE ? renderOffensiveEdit(data.offensiveSummary || {}) : ''}
     ${data.type === HQ_TYPE ? renderHqEdit(data.hqAudit || { items:{} }) : ''}

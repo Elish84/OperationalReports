@@ -5,6 +5,7 @@ const { jsPDF } = window.jspdf;
 const AUDIT_TYPE = "ביקורת קצה מבצעי";
 const HQ_TYPE = "ביקורת חמ״ל";
 const OFFENSIVE_TYPE = "סיכום פעילות התקפית ⚔️";
+const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
 const clamp1to5 = (n) => Math.max(1, Math.min(5, Number(n) || 0));
 const scoreToIcon = (n) => {
   if (n === "na" || n == null) return "—";
@@ -81,7 +82,8 @@ export function buildWhatsappText(d) {
   if (m.force) lines.push(`כוח: ${m.force}`);
 
   if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.exerciseDescription) {
-    lines.push("", "📝 *תיאור התרגול:*", d.exerciseDescription);
+    const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+    lines.push("", `📝 *${descLabel}:*`, d.exerciseDescription);
   }
 
   if (d.type === AUDIT_TYPE && d.audit) {
@@ -242,7 +244,8 @@ export async function exportPdf(d, photos) {
   addLine(`גזרה: ${m.sector || "—"} | כוח: ${m.force || "—"}`);
 
   if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.exerciseDescription) {
-    addTitle("תיאור התרגול");
+    const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+    addTitle(descLabel);
     addParagraph(d.exerciseDescription);
   }
 

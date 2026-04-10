@@ -2,8 +2,14 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>ביקורות ותרגילים-צמ״מ 8109 (v2)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>תרגילים וביקורות 8109</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="8109"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
   <link rel="stylesheet" href="assets/style.css"/>
 </head>
 <body>
@@ -33,6 +39,7 @@
         <label>סוג</label>
         <select id="type">
           <option>תרגול משימה</option>
+          <option>סיכום פעילות רחפן 🚁</option>
           <option>ביקורת קצה מבצעי</option>
           <option>תרגיל מסגרתי אורגני</option>
           <option>תרגיל משולב כוחות</option>
@@ -58,7 +65,9 @@
         <select id="role">
           <option>צמ״מ</option><option>מג״ד</option><option>סמג״ד</option>
           <option>מ״פ</option><option>מ״מ</option><option>מ״כ/סמ״ל</option>
-          <option>קמב״ץ</option><option>קצין אג״ם</option><option>אחר</option>
+          <option>קמב״ץ</option><option>קצין אג״ם</option>
+          <option>מטיס / נווט</option>
+          <option>אחר</option>
         </select>
       </div>
       <div>
@@ -71,7 +80,7 @@
     <input id="force" placeholder="שדה חופשי"/>
 
     <div id="exerciseDescriptionWrap" class="hidden">
-      <label>תיאור התרגול</label>
+      <label id="exerciseLabel">תיאור התרגול</label>
       <textarea id="exerciseDescription" placeholder="מה תרגלתם? מטרות, תרחיש, דגשים, תוצרים..."></textarea>
     </div>
 
@@ -279,21 +288,32 @@
 (function(){
   const typeSel = document.getElementById("type");
   const exWrap = document.getElementById("exerciseDescriptionWrap");
+  const exLabel = document.getElementById("exerciseLabel");
   const offWrap = document.getElementById("offensiveSummaryWrap");
   const generalNotesWrap = document.getElementById("generalNotesWrap");
   const offensiveNotesWrap = document.getElementById("offensiveNotesWrap");
+  
   const AUDIT_TYPE = "ביקורת קצה מבצעי";
   const HQ_TYPE = "ביקורת חמ״ל";
   const OFF_TYPE = "סיכום פעילות התקפית ⚔️";
+  const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
+
   function syncExtraSections(){
     const type = typeSel?.value || "";
     const isAudit = type === AUDIT_TYPE;
     const isHq = type === HQ_TYPE;
     const isOff = type === OFF_TYPE;
+    const isDrone = type === DRONE_TYPE;
+
     if (exWrap) exWrap.classList.toggle("hidden", isAudit || isHq || isOff);
     if (offWrap) offWrap.classList.toggle("hidden", !isOff);
     if (generalNotesWrap) generalNotesWrap.classList.toggle("hidden", isOff);
     if (offensiveNotesWrap) offensiveNotesWrap.classList.toggle("hidden", !isOff);
+
+    // Dynamic Label Change
+    if (exLabel) {
+      exLabel.textContent = isDrone ? "תיאור הפעילות" : "תיאור התרגול";
+    }
   }
   typeSel?.addEventListener("change", syncExtraSections);
   syncExtraSections();
@@ -302,5 +322,20 @@
 
 <script type="module" src="js/ui.js"></script>
 <script type="module" src="js/form.js"></script>
+<script type="module">
+  import { initPWA } from './js/pwa-manager.js';
+  
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW Registered', reg))
+        .catch(err => console.log('SW Registration Failed', err));
+    });
+  }
+
+  // Initialize PWA Manager (prompts, iOS)
+  initPWA();
+</script>
 </body>
 </html>

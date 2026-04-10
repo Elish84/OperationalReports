@@ -19,6 +19,7 @@ const valArr = (ids) => ids.map((id) => valTrim(id)).filter(Boolean);
 const AUDIT_TYPE = "ביקורת קצה מבצעי";
 const HQ_TYPE = "ביקורת חמ״ל";
 const OFFENSIVE_TYPE = "סיכום פעילות התקפית ⚔️";
+const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
 
 function warnMissing(ids) {
   const missing = ids.filter((id) => !el(id));
@@ -181,6 +182,33 @@ function normalizeForScore(obj) {
     norm[k] = v === "na" ? null : Number(v);
   }
   return norm;
+}
+
+const STORAGE_KEY = "8109_form_context";
+
+function saveContext() {
+  const context = {
+    role: val("role"),
+    name: valTrim("name"),
+    sector: val("sector"),
+    force: valTrim("force")
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(context));
+}
+
+function loadContext() {
+  const contextStr = localStorage.getItem(STORAGE_KEY);
+  if (!contextStr) return;
+  try {
+    const context = JSON.parse(contextStr);
+    if (context.role) { el("role").value = context.role; }
+    if (context.name) { el("name").value = context.name; }
+    if (context.sector) { el("sector").value = context.sector; }
+    if (context.force) { el("force").value = context.force; }
+    
+    // Trigger any UI updates if needed
+    el("type")?.dispatchEvent(new Event("change"));
+  } catch (e) { console.warn("Failed to load context", e); }
 }
 
 function collectData() {
@@ -364,3 +392,14 @@ el("pdfBtn")?.addEventListener("click", async () => {
     if (statusLine) statusLine.textContent = "❌ יצוא PDF נכשל";
   }
 });
+
+// Persistence hooks
+["role", "name", "sector", "force"].forEach(id => {
+  el(id)?.addEventListener("change", saveContext);
+  el(id)?.addEventListener("blur", saveContext);
+});
+
+// Initial load
+document.addEventListener("DOMContentLoaded", loadContext);
+// Also try immediate load since scripts are modules and might run after DOMContentLoaded
+loadContext();

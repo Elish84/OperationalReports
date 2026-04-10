@@ -2,8 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>דשבורד סטטיסטיקות</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>דשבורד סטטיסטיקות - 8109</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
   <link rel="stylesheet" href="assets/style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -233,5 +238,15 @@
 </script>
 
 <script type="module" src="js/dashboard.js"></script>
+<script type="module">
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW Registered', reg))
+        .catch(err => console.log('SW Registration Failed', err));
+    });
+  }
+</script>
 </body>
 </html>

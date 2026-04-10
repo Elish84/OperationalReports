@@ -27,6 +27,7 @@ Chart.defaults.font.size = 13;
 const SECTORS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון"];
 const OTHER_LABEL = "מפקדים";
 const OFFENSIVE_TYPE = "סיכום פעילות התקפית ⚔️";
+const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
 const charts = new Map();
 let lastAgg = null;
 let lastRangeLabel = "";
@@ -35,7 +36,7 @@ function isoDate(d) { const pad = (n) => String(n).padStart(2, "0"); return `${d
 function toDateMaybe(ts) { if (!ts) return null; if (typeof ts?.toDate === "function") return ts.toDate(); if (typeof ts === "string") { const d = new Date(ts); return isNaN(d.getTime()) ? null : d; } return null; }
 function getEventDate(d) { return toDateMaybe(d?.eventAt) || toDateMaybe(d?.createdAt); }
 function normalizeRole(v) { return String(v || "").trim().replace(/[״“”]/g, '"'); }
-function normalizeType(v) { return String(v || '').replace(' ⚔️', '').trim(); }
+function normalizeType(v) { return String(v || '').replace(' ⚔️', '').replace(' 🚁', '').trim(); }
 function readRole(data) { return normalizeRole(data?.role || data?.meta?.role); }
 function readSector(data) { return String(data?.sector || data?.meta?.sector || "").trim(); }
 
@@ -68,7 +69,9 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
     const ev = getEventDate(data); if (!ev) continue; if (fromDate && ev < fromDate) continue; if (toDateEnd && ev > toDateEnd) continue;
     const sector = readSector(data); if (!SECTORS.includes(sector)) continue;
     const rawType = data?.type || "לא ידוע";
-    const type = normalizeType(rawType) === normalizeType(OFFENSIVE_TYPE) ? OFFENSIVE_TYPE : rawType;
+    let type = rawType;
+    if (normalizeType(rawType) === normalizeType(OFFENSIVE_TYPE)) type = OFFENSIVE_TYPE;
+    else if (normalizeType(rawType) === normalizeType(DRONE_TYPE)) type = DRONE_TYPE;
     if (typeFilter && normalizeType(type) !== normalizeType(typeFilter)) continue;
     const isTzmm = readRole(data) === 'צמ"מ' || readRole(data) === 'צמ״מ';
     const bucket = bySector[sector]; typesSet.add(type);
