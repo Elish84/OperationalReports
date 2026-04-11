@@ -30,6 +30,14 @@ export function initPWA() {
             showIosOnboarding();
         }
     }
+
+    // Auto-reload on SW update
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('Service Worker updated, reloading...');
+            window.location.reload();
+        });
+    }
 }
 
 function showInstallBanner() {

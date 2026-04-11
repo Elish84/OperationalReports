@@ -42,8 +42,12 @@ function readSector(data) { return String(data?.sector || data?.meta?.sector || 
 
 initGlobalAuthUI(false);
 
-watchAuth((u) => {
-  if (loginStatus) loginStatus.textContent = u ? `✅ מחובר: ${u.email || "anonymous"}` : "🔒 לא מחובר";
+watchAuth(async (u) => {
+  const isRealAdmin = u && !u.isAnonymous;
+  if (loginStatus) loginStatus.textContent = isRealAdmin ? `✅ מחובר: ${u.email}` : "🔒 לא מחובר (מצב צפייה)";
+  if (isRealAdmin) {
+    loadDashboard();
+  }
 });
 
 async function fetchAllReviews(maxDocs = 5000) {
@@ -168,16 +172,30 @@ function renderTable(agg) {
 async function loadDashboard() {
   try {
     dashStatus.textContent = 'טוען...';
-    const docs = await fetchAllReviews();
+    // 15s Timeout for initial fetch
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout (15s)")), 15000));
+    const docs = await Promise.race([fetchAllReviews(), timeout]);
+
     const { fromDate, toDateEnd, label } = getDateRange();
     const agg = aggregate(docs, { fromDate, toDateEnd, typeFilter: typeFilterEl?.value || '' });
     lastAgg = agg; lastRangeLabel = label;
     const labels = agg.types.length ? agg.types : ['אין נתונים'];
-    SECTORS.forEach((s, i) => renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType));
-    renderCommandersBySectorChart(agg);
-    renderTable(agg);
+    
+    // Wrapped chart rendering in separate try-catch to prevent complete UI death
+    try {
+      SECTORS.forEach((s, i) => renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType));
+      renderCommandersBySectorChart(agg);
+      renderTable(agg);
+    } catch (chartErr) {
+      console.error("Chart Rendering Error:", chartErr);
+    }
+    
     dashStatus.textContent = `✅ נטען ${agg.kept} רשומות (${label})`;
-  } catch (e) { console.error(e); dashStatus.textContent = '❌ שגיאה בטעינה'; }
+  } catch (e) {
+    console.error("Dashboard Load Error:", e);
+    const retryIcon = '<button class="primary" onclick="window.location.reload()" style="padding:4px 8px;font-size:12px;margin-top:5px">נסה שוב 🔃</button>';
+    dashStatus.innerHTML = `❌ שגיאה בטעינה: <br><small>${e.message || e}</small><br>${retryIcon}`;
+  }
 }
 
 function toggleCustomRange() { customRange?.classList.toggle('hidden', daysSelect?.value !== 'custom'); }

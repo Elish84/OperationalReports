@@ -17,6 +17,7 @@
   <div class="bar">
     <div>
       <div class="brand">📋 ביקורות ותרגילים</div>
+      <div class="badge" id="autoDt"></div>
     </div>
     <div class="actions" style="margin:0">
       <a href="index.html" style="text-decoration:none"><button class="active-tab">📋 טופס</button></a>
@@ -83,7 +84,7 @@
       <textarea id="exerciseDescription" placeholder="מה תרגלתם? מטרות, תרחיש, דגשים, תוצרים..."></textarea>
     </div>
 
-    <div id="offensiveSummaryWrap" class="hidden">
+    <div id="offensiveCard" class="hidden">
       <label>סוג משימה</label>
       <select id="offMissionType">
         <option value="">בחר</option>
@@ -107,7 +108,7 @@
     </div>
   </div>
 
-  <div id="auditCard" class="card hidden">
+  <div id="auditCard" class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
       <div>
         <h3 style="margin:0 0 6px 0">ביקורת קצה מבצעי (v2)</h3>
@@ -288,9 +289,11 @@
 <script>
 (function(){
   const typeSel = document.getElementById("type");
-  const exWrap = document.getElementById("exerciseDescriptionWrap");
+  const auditCard = document.getElementById("auditCard");
+  const hqCard = document.getElementById("hqCard");
+  const offensiveCard = document.getElementById("offensiveSummaryWrap");
+  const exerciseDescriptionWrap = document.getElementById("exerciseDescriptionWrap");
   const exLabel = document.getElementById("exerciseLabel");
-  const offWrap = document.getElementById("offensiveSummaryWrap");
   const generalNotesWrap = document.getElementById("generalNotesWrap");
   const offensiveNotesWrap = document.getElementById("offensiveNotesWrap");
   
@@ -303,13 +306,16 @@
     const type = typeSel?.value || "";
     const isAudit = type === AUDIT_TYPE;
     const isHq = type === HQ_TYPE;
-    const isOff = type === OFF_TYPE;
+    const isOffensive = type === OFF_TYPE;
     const isDrone = type === DRONE_TYPE;
 
-    if (exWrap) exWrap.classList.toggle("hidden", isAudit || isHq || isOff);
-    if (offWrap) offWrap.classList.toggle("hidden", !isOff);
-    if (generalNotesWrap) generalNotesWrap.classList.toggle("hidden", isOff);
-    if (offensiveNotesWrap) offensiveNotesWrap.classList.toggle("hidden", !isOff);
+    auditCard?.classList.toggle("hidden", !isAudit);
+    hqCard?.classList.toggle("hidden", !isHq);
+    offensiveCard?.classList.toggle("hidden", !isOffensive);
+    exerciseDescriptionWrap?.classList.toggle("hidden", isAudit || isHq || isOffensive);
+    
+    if (generalNotesWrap) generalNotesWrap.classList.toggle("hidden", isOffensive);
+    if (offensiveNotesWrap) offensiveNotesWrap.classList.toggle("hidden", !isOffensive);
 
     // Dynamic Label Change
     if (exLabel) {

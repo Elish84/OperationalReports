@@ -272,11 +272,13 @@ function closeModal(){ modalBackdrop.classList.add('hidden'); isEditing = false;
 initGlobalAuthUI(false);
 
 watchAuth((u)=>{ 
-  isAuthed = !!u;
+  isAuthed = u && !u.isAnonymous;
   if (!isAuthed) { 
     if(editModalBtn) editModalBtn.disabled = true; 
     if(deleteModalBtn) deleteModalBtn.disabled = true; 
-    tbody.innerHTML=''; currentRows=[]; currentFilteredRows=[]; listStatus.textContent=''; el('moreBtn').classList.add('hidden'); lastDoc=null;
+    tbody.innerHTML=''; currentRows=[]; currentFilteredRows=[]; listStatus.textContent='🔒 עליך להתחבר כמנהל לצפייה ברשומות'; el('moreBtn').classList.add('hidden'); lastDoc=null;
+  } else {
+    loadPage({ reset: true });
   }
 });
 el('closeModalBtn').addEventListener('click', closeModal);
@@ -326,7 +328,10 @@ async function loadPage({ reset }){
     lastDoc = snap.docs[snap.docs.length - 1] || lastDoc;
     listStatus.textContent = `✅ נטענו ${currentFilteredRows.length} רשומות`;
     if (snap.docs.length === 200) el('moreBtn').classList.remove('hidden');
-  }catch(e){ console.error(e); listStatus.textContent = '❌ אין הרשאה (ודא שאתה admin) / תקלה'; }
+  } catch (e) {
+    console.error("Reports Load Error:", e);
+    listStatus.innerHTML = `❌ שגיאת טעינה: <br><small>${e.message || e}</small>`;
+  }
 }
 
 editModalBtn.addEventListener('click', async ()=>{
