@@ -84,14 +84,13 @@
 <header>
   <div class="bar">
     <div>
-      <div class="brand">📊 דשבורד סטטיסטיקות</div>
-      <div class="badge">גישה רק למנהלים מורשים (Email/Password)</div>
-    </div>
     <div class="actions" style="margin:0">
-      <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
+      <a href="index.html" style="text-decoration:none"><button>📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button class="active-tab">דשבורד 🔒</button></a>
       <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
-      <button class="primary" id="loginBtn">התחברות מנהל</button>
-      <button class="danger hidden" id="logoutBtn">התנתקות</button>
+      <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
     </div>
   </div>
 </header>
@@ -106,23 +105,7 @@
     </div>
   </div>
 
-  <div class="card" id="loginCard">
-    <h3>התחברות מנהל</h3>
 
-    <label>אימייל</label>
-    <input id="adminEmail" type="email" placeholder="name@example.com" autocomplete="username"/>
-
-    <label>סיסמה</label>
-    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-
-    <div class="actions">
-      <button class="primary" id="loginBtnInline">התחברות</button>
-      <button class="danger hidden" id="logoutBtnInline">התנתקות</button>
-    </div>
-
-    <div class="small" id="loginStatus">🔒 לא מחובר</div>
-    <div class="small">* רק משתמשים שמופיעים ברשימת <b>admins</b> יראו סטטיסטיקות ורשומות.</div>
-  </div>
 
   <div class="card">
     <h3>פילטרים</h3>
@@ -225,17 +208,7 @@
   </div>
 </div>
 
-<script type="module">
-  // סנכרון בין זוג כפתורי header לזוג הכפתורים בתוך הכרטיס
-  const bind = (srcId, dstId) => {
-    const src = document.getElementById(srcId);
-    const dst = document.getElementById(dstId);
-    if (src && dst) src.addEventListener("click", () => dst.click());
-  };
 
-  bind("loginBtn", "loginBtnInline");
-  bind("logoutBtn", "logoutBtnInline");
-</script>
 
 <script type="module" src="js/dashboard.js"></script>
 <script type="module">

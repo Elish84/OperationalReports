@@ -17,15 +17,14 @@
   <div class="bar">
     <div>
       <div class="brand">📋 ביקורות ותרגילים</div>
-      <div class="badge" id="autoDt"></div>
     </div>
     <div class="actions" style="margin:0">
-      <a href="dashboard.html" style="text-decoration:none">
-        <button class="primary">דשבורד 🔒</button>
-      </a>
-      <a href="reports.html" style="text-decoration:none">
-        <button>רשומות 🗂️</button>
-      </a>
+      <a href="index.html" style="text-decoration:none"><button class="active-tab">📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
+      <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
     </div>
   </div>
 </header>
@@ -108,7 +107,7 @@
     </div>
   </div>
 
-  <div id="auditCard" class="card">
+  <div id="auditCard" class="card hidden">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap">
       <div>
         <h3 style="margin:0 0 6px 0">ביקורת קצה מבצעי (v2)</h3>
@@ -281,6 +280,8 @@
 
     <div class="small" id="statusLine"></div>
   </div>
+
+
 </div>
 
 
@@ -324,6 +325,7 @@
 <script type="module" src="js/form.js"></script>
 <script type="module">
   import { initPWA } from './js/pwa-manager.js';
+  import { initGlobalAuthUI } from './js/auth.js';
   
   // Register Service Worker
   if ('serviceWorker' in navigator) {
@@ -336,6 +338,8 @@
 
   // Initialize PWA Manager (prompts, iOS)
   initPWA();
+  // Initialize Global Auth UI
+  initGlobalAuthUI(false);
 </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // public/js/reports.js (v3)
 import { db } from "./firebase-init.js";
-import { loginEmailPassword, logout, watchAuth } from "./auth.js";
+import { initGlobalAuthUI, watchAuth } from "./auth.js";
 import { buildWhatsappText } from "./pdf.js";
 import {
   collection, getDocs, query, orderBy, limit, startAfter, Timestamp,
@@ -8,7 +8,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const el = (id)=>document.getElementById(id);
-const loginStatus = el("loginStatus");
 const listStatus  = el("listStatus");
 const tbody       = el("tbody");
 const modalBackdrop = el("modalBackdrop");
@@ -270,13 +269,16 @@ function renderModalEdit(){
 
 function openModal(row){ currentRow = row; isEditing = false; editModalBtn.textContent = 'עריכה'; deleteModalBtn.disabled = !isAuthed; editModalBtn.disabled = !isAuthed; renderModalView(); modalBackdrop.classList.remove('hidden'); }
 function closeModal(){ modalBackdrop.classList.add('hidden'); isEditing = false; editModalBtn.textContent = 'עריכה'; deleteModalBtn.disabled = !isAuthed; }
-function toggleLoginUI(ok){ ["loginBtn","loginBtnInline"].forEach(id => el(id)?.classList.toggle("hidden", ok)); ["logoutBtn","logoutBtnInline"].forEach(id => el(id)?.classList.toggle("hidden", !ok)); }
+initGlobalAuthUI(false);
 
-watchAuth((u)=>{ toggleLoginUI(!!u); isAuthed = !!u; loginStatus.textContent = u ? `✅ מחובר: ${u.email || 'anonymous'}` : '🔒 לא מחובר'; if (!isAuthed) { editModalBtn.disabled = true; deleteModalBtn.disabled = true; } });
-async function doLogin(){ try{ loginStatus.textContent='מתחבר...'; await loginEmailPassword(el('adminEmail').value.trim(), el('adminPass').value); loginStatus.textContent='✅ התחברת. אפשר לטעון רשומות.'; }catch(e){ console.error(e); loginStatus.textContent='❌ התחברות נכשלה'; } }
-async function doLogout(){ await logout(); loginStatus.textContent='התנתקת'; tbody.innerHTML=''; currentRows=[]; currentFilteredRows=[]; listStatus.textContent=''; el('moreBtn').classList.add('hidden'); lastDoc=null; }
-["loginBtn","loginBtnInline"].forEach(id => el(id)?.addEventListener('click', doLogin));
-["logoutBtn","logoutBtnInline"].forEach(id => el(id)?.addEventListener('click', doLogout));
+watchAuth((u)=>{ 
+  isAuthed = !!u;
+  if (!isAuthed) { 
+    if(editModalBtn) editModalBtn.disabled = true; 
+    if(deleteModalBtn) deleteModalBtn.disabled = true; 
+    tbody.innerHTML=''; currentRows=[]; currentFilteredRows=[]; listStatus.textContent=''; el('moreBtn').classList.add('hidden'); lastDoc=null;
+  }
+});
 el('closeModalBtn').addEventListener('click', closeModal);
 modalBackdrop.addEventListener('click', (e)=>{ if (e.target === modalBackdrop) closeModal(); });
 

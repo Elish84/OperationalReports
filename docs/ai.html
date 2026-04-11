@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>שאל את הינשוף 🦉 - 8109</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    /* Add extra sleekness to the AI chat area */
+    #aiResultContent {
+      padding: 18px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
+      <a href="ai.html" style="text-decoration:none"><button class="active-tab">AI 🦉</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card" id="aiCard">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px">
+      <h3 style="margin:0">שאל את הינשוף 🦉</h3>
+    </div>
+    
+    <div class="small" style="margin-bottom:16px; font-size:14px; line-height:1.5;">
+      הינשוף יכול לסכם תופעות מתוך הביקורות שלך. <b>המלצה:</b> סנן קודם את הגזרה וסוג הפעילות כדי לקבל תובנות יותר מדויקות וממוקדות למה שמעניין אותך!
+    </div>
+
+    <div class="actions" style="margin-bottom:15px">
+      <button id="toggleAiFilters" style="width:100%; justify-content:center; border: 1px dashed rgba(255,255,255,0.2); gap:8px;">
+        <svg fill="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.72-4.8 5.74-7.39c.51-.66.04-1.61-.79-1.61H5.04c-.83 0-1.3.95-.79 1.61z"/></svg> 
+        פתח / סגור מסנני חיפוש
+      </button>
+    </div>
+
+    <div id="aiFiltersWrap" class="hidden" style="margin-bottom:20px; padding:15px; background: rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+        <div class="row">
+            <div>
+                <label>גזרה</label>
+                <select id="ai_sector">
+                    <option value="">הכל</option>
+                    <option>אלון מורה</option>
+                    <option>איתמר</option>
+                    <option>ברכה</option>
+                    <option>לב השומרון</option>
+                    <option>אחר</option>
+                </select>
+            </div>
+            <div>
+                <label>סוג פעילות</label>
+                <select id="ai_type">
+                    <option value="">הכל</option>
+                    <option>תרגול משימה</option>
+                    <option>סיכום פעילות רחפן 🚁</option>
+                    <option>ביקורת קצה מבצעי</option>
+                    <option>סיכום פעילות התקפית ⚔️</option>
+                    <option>ביקורת חמ״ל</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-bottom:20px">
+      <textarea id="aiQuestion" placeholder="שאל כל שאלה על הנתונים המסוננים... (למשל: מהן התקלות הנפוצות?)" style="min-height:80px; font-size:15px;"></textarea>
+    </div>
+    
+    <div class="actions">
+      <button class="primary" id="askAiBtn" style="font-size:16px; padding:12px 24px; width:100%; justify-content:center;">✨ קבל תובנות מלומדות</button>
+    </div>
+
+    <div id="aiResult" class="hidden" style="margin-top:25px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px">
+        <div id="aiResultContent" style="white-space:pre-wrap; display:none;"></div>
+        
+        <div class="actions" id="waExportArea" style="margin-top:20px; display:none;">
+            <button id="waExportAiBtn" class="primary" style="background:#25D366; color:white; border-color:#25D366; width:100%; justify-content:center;">
+              <svg style="width:20px;height:20px;margin-left:8px;" viewBox="0 0 24 24" fill="currentColor">
+                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-5.824 4.74-10.563 10.573-10.563 5.824 0 10.561 4.743 10.561 10.565 0 5.823-4.738 10.561-10.563 10.561z"/>
+              </svg>
+              שתף תובנות לוואטסאפ
+            </button>
+        </div>
+
+        <div id="adminDebugArea" class="hidden" style="margin-top:20px; padding:10px; background:rgba(0,0,0,0.2); border:1px dashed var(--muted); border-radius:8px">
+            <div class="small" style="font-weight:bold; margin-bottom:5px">Admin Debug Mode</div>
+            <div id="debugContent" class="small" style="max-height:200px; overflow:auto; font-family:monospace; line-height:1.2"></div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAiInsights } from './js/ai-insights.js';
+  initAiInsights();
+</script>
+<script type="module">
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW Registered', reg))
+        .catch(err => console.log('SW Registration Failed', err));
+    });
+  }
+</script>
+</body>
+</html>

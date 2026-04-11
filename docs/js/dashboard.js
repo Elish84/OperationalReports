@@ -1,6 +1,6 @@
 // public/js/dashboard.js (v5)
 import { db } from "./firebase-init.js";
-import { loginEmailPassword, logout, watchAuth } from "./auth.js";
+import { initGlobalAuthUI, watchAuth } from "./auth.js";
 import {
   collection,
   getDocs,
@@ -40,14 +40,11 @@ function normalizeType(v) { return String(v || '').replace(' ⚔️', '').replac
 function readRole(data) { return normalizeRole(data?.role || data?.meta?.role); }
 function readSector(data) { return String(data?.sector || data?.meta?.sector || "").trim(); }
 
+initGlobalAuthUI(false);
+
 watchAuth((u) => {
-  ["loginBtn", "loginBtnInline"].forEach((id) => el(id)?.classList.toggle("hidden", !!u));
-  ["logoutBtn", "logoutBtnInline"].forEach((id) => el(id)?.classList.toggle("hidden", !u));
-  loginStatus.textContent = u ? `✅ מחובר: ${u.email || "anonymous"}` : "🔒 לא מחובר";
+  if (loginStatus) loginStatus.textContent = u ? `✅ מחובר: ${u.email || "anonymous"}` : "🔒 לא מחובר";
 });
-async function doLogin() { try { loginStatus.textContent = "מתחבר..."; await loginEmailPassword(el("adminEmail")?.value?.trim(), el("adminPass")?.value); loginStatus.textContent = "✅ התחברת"; } catch (e) { console.error(e); loginStatus.textContent = "❌ התחברות נכשלה"; } }
-async function doLogout() { await logout(); loginStatus.textContent = "התנתקת"; charts.forEach((c) => c.destroy()); charts.clear(); el("table").textContent = ""; dashStatus.textContent = ""; lastAgg = null; lastRangeLabel = ""; }
-el("loginBtn")?.addEventListener("click", doLogin); el("logoutBtn")?.addEventListener("click", doLogout);
 
 async function fetchAllReviews(maxDocs = 5000) {
   const all = []; let cursor = null;

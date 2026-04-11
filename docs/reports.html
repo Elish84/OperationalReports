@@ -15,31 +15,18 @@
 <header>
   <div class="bar">
     <div>
-      <div class="brand">🗂️ רשימת דוחות</div>
-      <div class="badge">גישה למנהלים בלבד</div>
-    </div>
     <div class="actions" style="margin:0">
-      <a href="index.html" style="text-decoration:none"><button>חזרה לטופס</button></a>
-      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד</button></a>
-      <button class="primary" id="loginBtn">התחברות</button>
-      <button class="danger hidden" id="logoutBtn">התנתקות</button>
+      <a href="index.html" style="text-decoration:none"><button>📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
+      <a href="reports.html" style="text-decoration:none"><button class="active-tab">רשומות 🗂️</button></a>
+      <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
     </div>
   </div>
 </header>
 
 <div class="container">
-  <div class="card">
-    <h3>התחברות מנהל</h3>
-    <label>אימייל</label>
-    <input id="adminEmail" type="email" placeholder="name@example.com" autocomplete="username"/>
-    <label>סיסמה</label>
-    <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-    <div class="actions">
-      <button class="primary" id="loginBtnInline">התחברות</button>
-      <button class="danger hidden" id="logoutBtnInline">התנתקות</button>
-    </div>
-    <div class="small" id="loginStatus">🔒 לא מחובר</div>
-  </div>
 
   <div class="card">
     <h3>פילטרים</h3>

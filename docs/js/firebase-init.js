@@ -8,7 +8,7 @@ import { firebaseConfig } from "./firebase-config.js";
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, "me-west1");
 
 // Explicit Auth Persistence
 setPersistence(auth, browserLocalPersistence)

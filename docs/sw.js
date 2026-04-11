@@ -1,9 +1,10 @@
-const CACHE_NAME = '8109-v2';
+const CACHE_NAME = '8109-v4';
 const ASSETS = [
   './',
   './index.html',
   './dashboard.html',
   './reports.html',
+  './ai.html',
   './assets/style.css',
   './js/firebase-init.js',
   './js/firebase-config.js',
@@ -12,6 +13,7 @@ const ASSETS = [
   './js/form.js',
   './js/dashboard.js',
   './js/reports.js',
+  './js/ai-insights.js',
   './js/pwa-manager.js',
   './manifest.json',
   './icons/icon-192.png',
