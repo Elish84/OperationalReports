@@ -58,18 +58,42 @@ export async function initAiInsights() {
         const filters = {};
         const sectorVal = el("ai_sector").value;
         const typeVal = el("ai_type").value;
+        const roleVal = el("ai_role")?.value;
+        const forceVal = el("x_sq_search")?.value.trim();
+        const daysVal = el("ai_days")?.value;
         
         const filterStrArr = [];
         if (sectorVal) { filters.sector = sectorVal; filterStrArr.push(`גזרת ${sectorVal}`); }
         if (typeVal) { filters.type = typeVal; filterStrArr.push(`סוג ${typeVal}`); }
+        if (roleVal) { filters.role = roleVal; filterStrArr.push(`תפקיד ${roleVal}`); }
+        if (forceVal) { filters.force = forceVal; filterStrArr.push(`כוח ${forceVal}`); }
+        if (daysVal) {
+            const start = new Date(Date.now() - Number(daysVal) * 86400000).toISOString();
+            filters.dateRange = { start };
+            filterStrArr.push(`${daysVal} ימים אחרונים`);
+        }
         lastAppliedFiltersText = filterStrArr.length > 0 ? "סונן לפי: " + filterStrArr.join(", ") : "ללא סינון (כלל הנתונים)";
 
         try {
+            function formatOwlResponse(text) {
+                if (!text) return "";
+                // Bold headers (lines starting with digit+. or those appearing as headers)
+                let formatted = text.replace(/^(\d+\..+)$/gm, '<b>$1</b>');
+                formatted = formatted.replace(/^([^\w\s].+)$/gm, '<b>$1</b>');
+
+                // Colorize Confidence Levels
+                formatted = formatted.replace(/(רמת ביטחון:\s*גבוהה)/g, '<span style="color:#4ade80;font-weight:bold">$1</span>');
+                formatted = formatted.replace(/(רמת ביטחון:\s*בינונית)/g, '<span style="color:#fbbf24;font-weight:bold">$1</span>');
+                formatted = formatted.replace(/(רמת ביטחון:\s*נמוכה)/g, '<span style="color:#f87171;font-weight:bold">$1</span>');
+
+                return formatted;
+            }
+
             const res = await askInsightsFn({ question, filters });
             const { answer, records } = res.data;
 
             lastAnswer = answer;
-            resultContent.textContent = answer;
+            resultContent.innerHTML = formatOwlResponse(answer);
 
             if(waExportArea) waExportArea.style.display = "flex";
 
@@ -89,12 +113,14 @@ export async function initAiInsights() {
             // Handle specific Firebase HttpsError codes if they come through normally
             const errMsg = err.message || "";
             if (errMsg.includes("permission-denied") || errMsg.includes("Unauthenticated") || errMsg.includes("not an admin")) {
-                resultContent.textContent = "❌ גישה נדחתה: עליך להיות מחובר כמנהל מורשה כדי להשתמש בינשוף.";
+                resultContent.innerHTML = "<span style='color:#f87171;'>❌ גישה נדחתה: עליך להיות מחובר כמנהל מורשה כדי להשתמש בינשוף.</span>";
                 if (window.showLoginModal) window.showLoginModal();
-            } else if (errMsg.includes("FAILED_PRECONDITION")) {
-                resultContent.textContent = "❌ שגיאת מערכת (אינדקס חסר): אנא פנה למנהל המערכת להקמת האינדקס ב-Firestore.";
+            } else if (errMsg.includes("FAILED_PRECONDITION") || errMsg.includes("Missing vector index")) {
+                let debugUrl = errMsg.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+                let linkHtml = debugUrl ? `<br><br><a href="${debugUrl[0]}" target="_blank" style="color:#60a5fa; text-decoration:underline;">👉 לחץ כאן ליצירת האינדקס החסר</a>` : "";
+                resultContent.innerHTML = `<span style='color:#f87171;'>❌ שגיאת מערכת: המסנן שבחרת דורש 'אינדקס' במסד הנתונים שעדיין לא קיים או נמצא בבנייה. (לוקח כ-5 דקות מרגע השיגור).</span>` + linkHtml;
             } else {
-                resultContent.textContent = "❌ שגיאה בתקשורת עם הינשוף. נסה שוב בעוד רגע.";
+                resultContent.innerHTML = "<span style='color:#f87171;'>❌ שגיאה בתקשורת עם הינשוף. נסה שוב בעוד רגע (ייתכן ותוקף החיבור פג).</span>";
             }
         } finally {
             askBtn.disabled = false;

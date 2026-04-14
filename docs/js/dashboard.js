@@ -8,6 +8,8 @@ import {
   orderBy,
   limit,
   startAfter,
+  where,
+  Timestamp,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const el = (id) => document.getElementById(id);
@@ -46,16 +48,20 @@ watchAuth(async (u) => {
   const isRealAdmin = u && !u.isAnonymous;
   if (loginStatus) loginStatus.textContent = isRealAdmin ? `✅ מחובר: ${u.email}` : "🔒 לא מחובר (מצב צפייה)";
   if (isRealAdmin) {
-    loadDashboard();
+    dashStatus.innerHTML = '✅ מחובר. בחר טווח ולחץ על <b>טען נתונים</b>';
   }
 });
 
-async function fetchAllReviews(maxDocs = 5000) {
+async function fetchAllReviews(fromDate = null, maxDocs = 5000) {
   const all = []; let cursor = null;
+  const sinceTs = fromDate ? Timestamp.fromDate(fromDate) : null;
+  
   while (all.length < maxDocs) {
-    const parts = [collection(db, "reviews"), orderBy("createdAt", "desc"), limit(500)];
-    if (cursor) parts.splice(parts.length - 1, 0, startAfter(cursor));
-    const snap = await getDocs(query(...parts));
+    const qParts = [collection(db, "reviews"), orderBy("createdAt", "desc"), limit(500)];
+    if (sinceTs) qParts.push(where("createdAt", ">=", sinceTs));
+    if (cursor) qParts.push(startAfter(cursor));
+    
+    const snap = await getDocs(query(...qParts));
     snap.docs.forEach((d) => all.push({ id: d.id, data: d.data() }));
     if (snap.docs.length < 500) break;
     cursor = snap.docs[snap.docs.length - 1];
@@ -88,7 +94,12 @@ function renderChartForSector(canvasId, labels, countsByType) {
   const chart = new Chart(ctx, {
     type: "bar",
     data: { labels, datasets: [ { label: 'צמ״מ', data: labels.map((t) => countsByType[t]?.tzmm || 0), stack: "s" }, { label: OTHER_LABEL, data: labels.map((t) => countsByType[t]?.other || 0), stack: "s" } ] },
-    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: window.innerWidth < 768 ? false : { duration: 1000 },
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
+    },
   });
   charts.set(canvasId, chart);
 }
@@ -113,6 +124,7 @@ function renderCommandersBySectorChart(agg) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: window.innerWidth < 768 ? false : { duration: 1000 },
       scales: {
         x: { stacked: true },
         y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
@@ -172,11 +184,12 @@ function renderTable(agg) {
 async function loadDashboard() {
   try {
     dashStatus.textContent = 'טוען...';
+    const { fromDate, toDateEnd, label } = getDateRange();
+    
     // 15s Timeout for initial fetch
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout (15s)")), 15000));
-    const docs = await Promise.race([fetchAllReviews(), timeout]);
+    const docs = await Promise.race([fetchAllReviews(fromDate), timeout]);
 
-    const { fromDate, toDateEnd, label } = getDateRange();
     const agg = aggregate(docs, { fromDate, toDateEnd, typeFilter: typeFilterEl?.value || '' });
     lastAgg = agg; lastRangeLabel = label;
     const labels = agg.types.length ? agg.types : ['אין נתונים'];

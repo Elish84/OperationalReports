@@ -58,7 +58,17 @@
     <div class="row">
       <div>
         <label>חיפוש בשם מבצע</label>
-        <input id="filterName" placeholder="לדוגמה: אלי"/>
+        <input type="text" name="email" style="display:none" tabIndex="-1">
+        <input id="filterName" name="xyz_name_fld" placeholder="לדוגמה: אלי" 
+          readonly onfocus="this.removeAttribute('readonly');"
+          autocomplete="one-time-code"/>
+      </div>
+      <div>
+        <label>חיפוש חופשי (כותרת משימה)</label>
+        <input type="text" name="username" style="display:none" tabIndex="-1">
+        <input id="filterMissionTitle" name="xyz_desc_fld" placeholder="לדוגמה: מארב / תרגיל" 
+          readonly onfocus="this.removeAttribute('readonly');"
+          autocomplete="one-time-code"/>
       </div>
       <div>
         <label>ימים אחורה</label>

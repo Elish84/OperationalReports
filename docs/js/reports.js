@@ -278,7 +278,7 @@ watchAuth((u)=>{
     if(deleteModalBtn) deleteModalBtn.disabled = true; 
     tbody.innerHTML=''; currentRows=[]; currentFilteredRows=[]; listStatus.textContent='🔒 עליך להתחבר כמנהל לצפייה ברשומות'; el('moreBtn').classList.add('hidden'); lastDoc=null;
   } else {
-    loadPage({ reset: true });
+    listStatus.textContent = '✅ מחובר. בחר פילטרים ולחץ על "טען רשומות"';
   }
 });
 el('closeModalBtn').addEventListener('click', closeModal);
@@ -288,11 +288,23 @@ function applyClientFilters(rows){
   const type = el('filterType').value;
   const sector = el('filterSector').value;
   const name = el('filterName').value.trim().toLowerCase();
+  const missionText = el('filterMissionTitle')?.value.trim().toLowerCase();
+
   return rows.filter(({data}) => {
     const d = data || {};
     if (type && d.type !== type) return false;
     if (sector && (d.meta?.sector || '') !== sector) return false;
     if (name && !(d.meta?.name || '').toLowerCase().includes(name)) return false;
+    
+    if (missionText) {
+      const desc = (d.exerciseDescription || '').toLowerCase();
+      const hqDesc = (d.hqAudit?.exerciseOutline || '').toLowerCase();
+      const offMission = (d.offensiveSummary?.missionType || '').toLowerCase();
+      const notes = (d.notes || '').toLowerCase();
+      const fullText = `${desc} ${hqDesc} ${offMission} ${notes}`;
+      if (!fullText.includes(missionText)) return false;
+    }
+    
     return true;
   });
 }

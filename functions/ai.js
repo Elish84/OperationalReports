@@ -48,7 +48,8 @@ export const askInsights = ai.defineFlow(
         dateRange: z.object({
           start: z.string().nullable().optional(),
           end: z.string().nullable().optional()
-        }).nullable().optional()
+        }).nullable().optional(),
+        force: z.string().nullable().optional()
       }).nullable().optional()
     }),
     authPolicy: async (auth) => {
@@ -91,6 +92,7 @@ export const askInsights = ai.defineFlow(
     if (filters?.sector) query = query.where('meta.sector', '==', filters.sector);
     if (filters?.type) query = query.where('type', '==', filters.type);
     if (filters?.role) query = query.where('meta.role', '==', filters.role);
+    if (filters?.force) query = query.where('meta.force', '==', filters.force);
     if (filters?.dateRange?.start) {
         query = query.where('createdAt', '>=', new Date(filters.dateRange.start));
     }
