@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>מנהל הגדרות - 8109</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    .list-card {
+      margin-bottom: 20px;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+    }
+    .del-btn {
+      background: rgba(255,0,0,0.2) !important;
+      color: #ff6b6b !important;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .add-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .add-row input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">ניהול הגדרות ⚙️</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
+      <a href="admin.html" id="adminTabBtn" class="active-tab" style="text-decoration:none"><button class="active-tab">מנהל הגדרות ⚙️</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card status-card">
+    <div id="adminStatus">טוען רשימות...</div>
+  </div>
+
+  <div id="listsContainer"></div>
+</div>
+
+<script type="module" src="js/admin.js"></script>
+<script type="module">
+  import { initGlobalAuthUI } from './js/auth.js';
+  // Require auth to access admin page
+  initGlobalAuthUI(true);
+</script>
+</body>
+</html>

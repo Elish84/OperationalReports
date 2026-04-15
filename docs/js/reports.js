@@ -6,6 +6,7 @@ import {
   collection, getDocs, query, orderBy, limit, startAfter, Timestamp,
   doc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { fetchLists, populateSelect } from "./lists.js";
 
 const el = (id)=>document.getElementById(id);
 const listStatus  = el("listStatus");
@@ -30,10 +31,9 @@ let currentFilteredRows = [];
 let currentRow = null;
 let isEditing = false;
 let isAuthed = false;
+let globalLists = null;
 
 const TYPE_OPTIONS = [AUDIT_TYPE, "תרגול משימה", "תרגיל מסגרתי אורגני", "תרגיל משולב כוחות", OFFENSIVE_TYPE, HQ_TYPE, DRONE_TYPE];
-const SECTOR_OPTIONS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון", "אחר"];
-const ROLE_OPTIONS = ["צמ״מ", "מג״ד", "סמג״ד", "מ״פ", "מ״מ", "מ״כ/סמ״ל", "קמב״ץ", "קצין אג״ם", "מטיס / נווט", "אחר"];
 const HQ_ITEM_LABELS = {
   shabzak: 'שבצ״ק לפעילויות', initiatedPage: 'דף יזומות פלוגתי', settlementMaps: 'מפות ישובים', crownsProcedure: 'פק״ל כתרים',
   optionsProcedure: 'פקל אופציות', orders: 'סדפ״ים', hardCommunication: 'דרכי תקשורת קשיחים', radioAndMasoah: 'תקינות קשר ומשואה', campDefenseFiles: 'תיקי הגנת מחנה'
@@ -137,9 +137,14 @@ function renderModalView(){
   const parts = [];
   parts.push(`<div class="small"><b>כוח:</b> ${h(m.force || '—')}</div>`);
 
-  if (data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.exerciseDescription) {
-    const descLabel = data.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
-    parts.push(`<div style="margin-top:10px"><b>${descLabel}</b></div><div style="white-space:pre-wrap">${h(data.exerciseDescription)}</div>`);
+  if (data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.type !== OFFENSIVE_TYPE) {
+    if (data.observationsIntegration) {
+      parts.push(`<div style="margin-top:10px"><b>שילוב תצפיות בתרגילים:</b> ${h(data.observationsIntegration)}</div>`);
+    }
+    if (data.exerciseDescription) {
+      const descLabel = data.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+      parts.push(`<div style="margin-top:10px"><b>${descLabel}</b></div><div style="white-space:pre-wrap">${h(data.exerciseDescription)}</div>`);
+    }
   }
   if (s) {
     parts.push(`<div class="small" style="margin-top:6px"><b>ציון סופי:</b> ${h(s.overall100 ?? '—')}</div>`);
@@ -249,14 +254,17 @@ function renderModalEdit(){
     </div>
     <div class="row">
       <div><label>סוג</label>${selectHtml('e_type', TYPE_OPTIONS, data.type || '')}</div>
-      <div><label>גזרה</label>${selectHtml('e_sector', SECTOR_OPTIONS, m.sector || '')}</div>
+      <div><label>גזרה</label>${selectHtml('e_sector', globalLists?.sectors || [], m.sector || '')}</div>
     </div>
     <div class="row">
       <div><label>שם</label><input id="e_name" value="${h(m.name || '')}" /></div>
-      <div><label>תפקיד</label>${selectHtml('e_role', ROLE_OPTIONS, m.role || '')}</div>
+      <div><label>תפקיד</label>${selectHtml('e_role', globalLists?.roles || [], m.role || '')}</div>
     </div>
-    <label>כוח</label><input id="e_force" value="${h(m.force || '')}" />
-    ${data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.type !== OFFENSIVE_TYPE ? `<label>${data.type === DRONE_TYPE ? 'תיאור הפעילות' : 'תיאור התרגול'}</label><textarea id="e_exDesc">${h(data.exerciseDescription || '')}</textarea>` : ''}
+    <div class="row">
+      <div><label>גדוד</label>${selectHtml('e_battalion', globalLists?.battalions || [], m.battalion || '')}</div>
+      <div><label>כוח</label><input id="e_force" value="${h(m.force || '')}" /></div>
+    </div>
+    ${data.type !== AUDIT_TYPE && data.type !== HQ_TYPE && data.type !== OFFENSIVE_TYPE ? `<label>שילוב תצפיות בתרגילים</label>${selectHtml('e_obsIntegration', globalLists?.observations || [], data.observationsIntegration || '')}<label>${data.type === DRONE_TYPE ? 'תיאור הפעילות' : 'תיאור התרגול'}</label><textarea id="e_exDesc">${h(data.exerciseDescription || '')}</textarea>` : ''}
     ${data.type === AUDIT_TYPE ? renderAuditEdit(data.audit || {}) : ''}
     ${data.type === OFFENSIVE_TYPE ? renderOffensiveEdit(data.offensiveSummary || {}) : ''}
     ${data.type === HQ_TYPE ? renderHqEdit(data.hqAudit || { items:{} }) : ''}
@@ -289,12 +297,16 @@ function applyClientFilters(rows){
   const sector = el('filterSector').value;
   const name = el('filterName').value.trim().toLowerCase();
   const missionText = el('filterMissionTitle')?.value.trim().toLowerCase();
+  const obs = el('filterObservations')?.value;
 
   return rows.filter(({data}) => {
     const d = data || {};
     if (type && d.type !== type) return false;
     if (sector && (d.meta?.sector || '') !== sector) return false;
     if (name && !(d.meta?.name || '').toLowerCase().includes(name)) return false;
+    if (obs === 'כל התצפיות') {
+      if (!d.observationsIntegration || d.observationsIntegration === 'ללא') return false;
+    } else if (obs && d.observationsIntegration !== obs) return false;
     
     if (missionText) {
       const desc = (d.exerciseDescription || '').toLowerCase();
@@ -358,7 +370,7 @@ editModalBtn.addEventListener('click', async ()=>{
     const type = get('e_type')?.value || currentRow.data.type;
     const payload = {
       type,
-      meta: { name: (get('e_name')?.value || '').trim(), role: get('e_role')?.value || '', sector: get('e_sector')?.value || '', force: (get('e_force')?.value || '').trim() },
+      meta: { name: (get('e_name')?.value || '').trim(), role: get('e_role')?.value || '', sector: get('e_sector')?.value || '', battalion: get('e_battalion')?.value || '', force: (get('e_force')?.value || '').trim() },
       notes: (get('e_notes')?.value || '').trim(),
       keep: type === OFFENSIVE_TYPE ? [] : splitLines(get('e_keep')?.value),
       improve: type === OFFENSIVE_TYPE ? [] : splitLines(get('e_improve')?.value),
@@ -370,7 +382,10 @@ editModalBtn.addEventListener('click', async ()=>{
     };
     if (eventAt) payload.eventAt = eventAt;
 
-    if (type !== AUDIT_TYPE && type !== HQ_TYPE && type !== OFFENSIVE_TYPE) payload.exerciseDescription = (get('e_exDesc')?.value || '').trim();
+    if (type !== AUDIT_TYPE && type !== HQ_TYPE && type !== OFFENSIVE_TYPE) {
+      payload.exerciseDescription = (get('e_exDesc')?.value || '').trim();
+      payload.observationsIntegration = get('e_obsIntegration')?.value || null;
+    }
     if (type === OFFENSIVE_TYPE) {
       payload.offensiveSummary = {
         missionType: get('e_offMissionType')?.value || '',
@@ -474,3 +489,11 @@ el('loadBtn').addEventListener('click', ()=>loadPage({ reset:true }));
 el('moreBtn').addEventListener('click', ()=>loadPage({ reset:false }));
 el('exportAllBtn')?.addEventListener('click', exportAllReports);
 window.exportAllReports = exportAllReports;
+
+(async function init() {
+  try {
+    globalLists = await fetchLists();
+    populateSelect('filterSector', globalLists.sectors, "", "הכל");
+    populateSelect('filterObservations', globalLists.observations, "", "הכל", { value: "כל התצפיות", text: "כל התצפיות" });
+  } catch (e) { console.error(e); }
+})();

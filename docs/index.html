@@ -24,6 +24,7 @@
       <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
       <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
       <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <a href="admin.html" id="adminTabBtn" class="hidden" style="text-decoration:none"><button>מנהל הגדרות ⚙️</button></a>
       <button class="primary hidden" id="loginBtn">כניסה</button>
       <button class="danger hidden" id="logoutBtn">צא</button>
     </div>
@@ -50,11 +51,7 @@
       <div>
         <label>גזרה</label>
         <select id="sector">
-          <option>אלון מורה</option>
-          <option>איתמר</option>
-          <option>ברכה</option>
-          <option>לב השומרון</option>
-          <option>אחר</option>
+          <option value="">בחר</option>
         </select>
       </div>
     </div>
@@ -63,11 +60,7 @@
       <div>
         <label>תפקיד</label>
         <select id="role">
-          <option>צמ״מ</option><option>מג״ד</option><option>סמג״ד</option>
-          <option>מ״פ</option><option>מ״מ</option><option>מ״כ/סמ״ל</option>
-          <option>קמב״ץ</option><option>קצין אג״ם</option>
-          <option>מטיס / נווט</option>
-          <option>אחר</option>
+          <option value="">בחר</option>
         </select>
       </div>
       <div>
@@ -76,10 +69,27 @@
       </div>
     </div>
 
-    <label>כוח</label>
-    <input id="force" placeholder="שדה חופשי" autocomplete="off"/>
+    <div class="row" style="margin-bottom:10px">
+      <div>
+        <label>גדוד</label>
+        <select id="battalion">
+          <option value="">בחר</option>
+        </select>
+      </div>
+      <div>
+        <label>כוח (שדה העשרה)</label>
+        <input id="force" placeholder="שדה חופשי" autocomplete="off"/>
+      </div>
+    </div>
 
-    <div id="exerciseDescriptionWrap" class="hidden">
+    <div id="observationsIntegrationWrap" class="hidden" style="margin-top:10px">
+      <label>שילוב תצפיות בתרגילים <span style="color:red">*</span></label>
+      <select id="observationsIntegration" required>
+        <option value="">בחר</option>
+      </select>
+    </div>
+
+    <div id="exerciseDescriptionWrap" class="hidden" style="margin-top:10px">
       <label id="exerciseLabel">תיאור התרגול</label>
       <textarea id="exerciseDescription" placeholder="מה תרגלתם? מטרות, תרחיש, דגשים, תוצרים..."></textarea>
     </div>
@@ -314,6 +324,10 @@
     offensiveCard?.classList.toggle("hidden", !isOffensive);
     exerciseDescriptionWrap?.classList.toggle("hidden", isAudit || isHq || isOffensive);
     
+    // observations integration logic
+    const obsWrap = document.getElementById("observationsIntegrationWrap");
+    obsWrap?.classList.toggle("hidden", isAudit || isHq || isOffensive);
+
     if (generalNotesWrap) generalNotesWrap.classList.toggle("hidden", isOffensive);
     if (offensiveNotesWrap) offensiveNotesWrap.classList.toggle("hidden", !isOffensive);
 

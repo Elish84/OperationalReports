@@ -81,9 +81,14 @@ export function buildWhatsappText(d) {
   lines.push(`גזרה: ${m.sector || "—"}`);
   if (m.force) lines.push(`כוח: ${m.force}`);
 
-  if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.exerciseDescription) {
-    const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
-    lines.push("", `📝 *${descLabel}:*`, d.exerciseDescription);
+  if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.type !== OFFENSIVE_TYPE) {
+    if (d.observationsIntegration) {
+      lines.push("", `🔍 *שילוב תצפיות בתרגילים:* ${d.observationsIntegration}`);
+    }
+    if (d.exerciseDescription) {
+      const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+      lines.push("", `📝 *${descLabel}:*`, d.exerciseDescription);
+    }
   }
 
   if (d.type === AUDIT_TYPE && d.audit) {
@@ -243,10 +248,15 @@ export async function exportPdf(d, photos) {
   addLine(`מבצע: ${m.name || "—"} | תפקיד: ${m.role || "—"}`);
   addLine(`גזרה: ${m.sector || "—"} | כוח: ${m.force || "—"}`);
 
-  if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.exerciseDescription) {
-    const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
-    addTitle(descLabel);
-    addParagraph(d.exerciseDescription);
+  if (d.type !== AUDIT_TYPE && d.type !== HQ_TYPE && d.type !== OFFENSIVE_TYPE) {
+    if (d.observationsIntegration) {
+      addLine(`שילוב תצפיות בתרגילים: ${d.observationsIntegration}`);
+    }
+    if (d.exerciseDescription) {
+      const descLabel = d.type === DRONE_TYPE ? "תיאור הפעילות" : "תיאור התרגול";
+      addTitle(descLabel);
+      addParagraph(d.exerciseDescription);
+    }
   }
 
   if (d.type === AUDIT_TYPE && d.audit) {

@@ -113,6 +113,10 @@ export function initGlobalAuthUI(requireAuthForAccess = false) {
     if (headerLoginBtn) headerLoginBtn.classList.toggle('hidden', isRealUser);
     if (headerLogoutBtn) headerLogoutBtn.classList.toggle('hidden', !isRealUser);
     
+    // Check all possible admin tabs across pages
+    const adminTabs = document.querySelectorAll('#adminTabBtn');
+    adminTabs.forEach(tab => tab.classList.toggle('hidden', !isRealUser));
+    
     if (isRealUser) {
       modal.classList.add('hidden');
     } else if (requireAuthForAccess) {

@@ -11,6 +11,7 @@ import {
   where,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { fetchLists, populateSelect } from "./lists.js";
 
 const el = (id) => document.getElementById(id);
 const dashStatus = el("dashStatus");
@@ -26,13 +27,16 @@ Chart.defaults.color = "rgba(255,255,255,0.92)";
 Chart.defaults.font.family = "system-ui, -apple-system, Segoe UI, Roboto, Arial";
 Chart.defaults.font.size = 13;
 
-const SECTORS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון"];
+let SECTORS = ["אלון מורה", "איתמר", "ברכה", "לב השומרון"]; // Default until loaded
 const OTHER_LABEL = "מפקדים";
 const OFFENSIVE_TYPE = "סיכום פעילות התקפית ⚔️";
 const DRONE_TYPE = "סיכום פעילות רחפן 🚁";
 const charts = new Map();
 let lastAgg = null;
 let lastRangeLabel = "";
+let globalLists = null;
+
+const val = (id, defaultVal = "") => el(id)?.value || defaultVal;
 
 function isoDate(d) { const pad = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 function toDateMaybe(ts) { if (!ts) return null; if (typeof ts?.toDate === "function") return ts.toDate(); if (typeof ts === "string") { const d = new Date(ts); return isNaN(d.getTime()) ? null : d; } return null; }
@@ -63,18 +67,22 @@ async function fetchAllReviews(fromDate = null, maxDocs = 5000) {
     
     const snap = await getDocs(query(...qParts));
     snap.docs.forEach((d) => all.push({ id: d.id, data: d.data() }));
+    if (dashStatus && all.length > 0) dashStatus.textContent = `טוען רשומות (${all.length})...`;
     if (snap.docs.length < 500) break;
     cursor = snap.docs[snap.docs.length - 1];
   }
   return all;
 }
 
-function aggregate(docs, { fromDate, toDateEnd, typeFilter }) {
+function aggregate(docs, { fromDate, toDateEnd, typeFilter, obsFilter }) {
   const bySector = {}; SECTORS.forEach((s) => { bySector[s] = { byType: {}, totals: { tzmm: 0, other: 0 } }; });
   const typesSet = new Set(); let kept = 0;
   for (const { data } of docs) {
     const ev = getEventDate(data); if (!ev) continue; if (fromDate && ev < fromDate) continue; if (toDateEnd && ev > toDateEnd) continue;
     const sector = readSector(data); if (!SECTORS.includes(sector)) continue;
+    if (obsFilter === 'כל התצפיות') {
+      if (!data?.observationsIntegration || data?.observationsIntegration === 'ללא') continue;
+    } else if (obsFilter && data?.observationsIntegration !== obsFilter) continue;
     const rawType = data?.type || "לא ידוע";
     let type = rawType;
     if (normalizeType(rawType) === normalizeType(OFFENSIVE_TYPE)) type = OFFENSIVE_TYPE;
@@ -184,13 +192,24 @@ function renderTable(agg) {
 async function loadDashboard() {
   try {
     dashStatus.textContent = 'טוען...';
+    
+    if (!globalLists) {
+      globalLists = await fetchLists();
+      if (globalLists.sectors && globalLists.sectors.length > 0) {
+        // Use dynamically loaded sectors
+        SECTORS = globalLists.sectors;
+      }
+      populateSelect("obsFilter", globalLists.observations, val("obsFilter"), "הכל", { value: "כל התצפיות", text: "כל התצפיות" });
+    }
+    
     const { fromDate, toDateEnd, label } = getDateRange();
     
-    // 15s Timeout for initial fetch
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout (15s)")), 15000));
+    // 60s Timeout for initial fetch
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout (60s)")), 60000));
     const docs = await Promise.race([fetchAllReviews(fromDate), timeout]);
 
-    const agg = aggregate(docs, { fromDate, toDateEnd, typeFilter: typeFilterEl?.value || '' });
+    const obsFilterEl = document.getElementById("obsFilter");
+    const agg = aggregate(docs, { fromDate, toDateEnd, typeFilter: typeFilterEl?.value || '', obsFilter: obsFilterEl?.value || '' });
     lastAgg = agg; lastRangeLabel = label;
     const labels = agg.types.length ? agg.types : ['אין נתונים'];
     

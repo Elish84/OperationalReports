@@ -7,6 +7,7 @@ import {
   setDoc
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { buildWhatsappText, exportPdf } from "./pdf.js";
+import { fetchLists, populateSelect } from "./lists.js";
 
 const el = (id) => document.getElementById(id);
 const statusLine = el("statusLine");
@@ -205,10 +206,23 @@ function loadContext() {
     if (context.name) { el("name").value = context.name; }
     if (context.sector) { el("sector").value = context.sector; }
     if (context.force) { el("force").value = context.force; }
+    if (context.battalion) { el("battalion").value = context.battalion; }
     
     // Trigger any UI updates if needed
     el("type")?.dispatchEvent(new Event("change"));
   } catch (e) { console.warn("Failed to load context", e); }
+}
+
+async function loadDynamicLists() {
+  try {
+    const lists = await fetchLists();
+    populateSelect("sector", lists.sectors, val("sector"));
+    populateSelect("observationsIntegration", lists.observations, val("observationsIntegration"));
+    populateSelect("role", lists.roles, val("role"));
+    populateSelect("battalion", lists.battalions, val("battalion"));
+  } catch (err) {
+    console.error("Failed loading lists", err);
+  }
 }
 
 function collectData() {
@@ -225,14 +239,22 @@ function collectData() {
   const isHq = type === HQ_TYPE;
   const isOffensive = type === OFFENSIVE_TYPE;
 
+  if (!isAudit && !isHq && !isOffensive) {
+    if (!val("observationsIntegration")) {
+      throw new Error("נא למלא את שדה שילוב תצפיות בתרגילים");
+    }
+  }
+
   const base = {
     type,
     meta: {
       role: val("role"),
       name: valTrim("name"),
       sector: val("sector"),
+      battalion: val("battalion"),
       force: valTrim("force")
     },
+    observationsIntegration: (!isAudit && !isHq && !isOffensive) ? val("observationsIntegration") : null,
     exerciseDescription: isOffensive ? "" : valTrim("exerciseDescription"),
     notes: valTrim("notes"),
     keep: isOffensive ? [] : valArr(["keep1", "keep2", "keep3"]),
@@ -377,6 +399,11 @@ el("saveBtn")?.addEventListener("click", async () => {
   } catch (e) {
     console.error(e);
     try { if (waWindow && !waWindow.closed) waWindow.close(); } catch (_) {}
+    if (e.message === "נא למלא את שדה שילוב תצפיות בתרגילים") {
+      alert(e.message);
+      if (statusLine) statusLine.textContent = "❌ " + e.message;
+      return;
+    }
     if (statusLine) statusLine.textContent = "❌ שמירה/יצוא לוואטסאפ נכשל";
   }
 });
@@ -389,17 +416,25 @@ el("pdfBtn")?.addEventListener("click", async () => {
     await exportPdf(data, photos);
   } catch (e) {
     console.error(e);
+    if (e.message === "נא למלא את שדה שילוב תצפיות בתרגילים") {
+      alert(e.message);
+      if (statusLine) statusLine.textContent = "❌ " + e.message;
+      return;
+    }
     if (statusLine) statusLine.textContent = "❌ יצוא PDF נכשל";
   }
 });
 
 // Persistence hooks
-["role", "name", "sector", "force"].forEach(id => {
+["role", "name", "sector", "force", "battalion"].forEach(id => {
   el(id)?.addEventListener("change", saveContext);
   el(id)?.addEventListener("blur", saveContext);
 });
 
 // Initial load
-document.addEventListener("DOMContentLoaded", loadContext);
-// Also try immediate load since scripts are modules and might run after DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  loadContext();
+  loadDynamicLists();
+});
 loadContext();
+loadDynamicLists();
