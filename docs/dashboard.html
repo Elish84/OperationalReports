@@ -65,10 +65,19 @@
 
     .chartWrap{
       height: 320px;
+      min-height: 260px;
+      position: relative;
       border: 1px solid var(--dashBorder);
       border-radius: 16px;
       background: rgba(0,0,0,.06);
       padding: 10px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .chartWrap { height: 260px; padding: 5px; }
+      .card { padding: 10px; }
+      .row > div { min-width: 140px; }
     }
 
     pre#table{
@@ -106,6 +115,13 @@
 
     <div class="row">
       <div>
+        <label>תעסוקה מבצעית</label>
+        <select id="deploymentFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
         <label>סוג</label>
         <select id="typeFilter">
           <option value="">הכל</option>
@@ -128,12 +144,6 @@
           <option value="40א">40א</option>
           <option value="30">30</option>
           <option value="ללא">ללא</option>
-        </select>
-      </div>
-      <div>
-        <label>תעסוקה מבצעית</label>
-        <select id="deploymentFilter">
-          <option value="">הכל</option>
         </select>
       </div>
 

@@ -259,7 +259,7 @@ async function loadDashboard() {
     lastAgg = agg; lastRangeLabel = label;
     const labels = agg.types.length ? agg.types : ['אין נתונים'];
     
-    // Wrapped chart rendering in separate try-catch to prevent complete UI death
+    // Staggered chart rendering to keep UI responsive on mobile
     try {
       const container = el("sectorChartsContainer");
       if (container) {
@@ -272,9 +272,19 @@ async function loadDashboard() {
         });
       }
       
-      SECTORS.forEach((s, i) => renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType));
+      // Initial render for commanders chart
       renderCommandersBySectorChart(agg);
       renderTable(agg);
+
+      // Staggered render for sector charts
+      for (let i = 0; i < SECTORS.length; i++) {
+        const s = SECTORS[i];
+        // Using a small delay for each chart to allow the browser to breathe
+        await new Promise(resolve => setTimeout(() => {
+          renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType);
+          resolve();
+        }, 50 * i)); 
+      }
     } catch (chartErr) {
       console.error("Chart Rendering Error:", chartErr);
     }
