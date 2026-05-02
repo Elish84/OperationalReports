@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>ינשוף - דשבורד 🦉</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="ינשוף"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Visual improvements (light text + better filter layout) -->
+  <style>
+    :root{
+      --dashText: rgba(255,255,255,.92);
+      --dashText2: rgba(255,255,255,.72);
+      --dashBorder: rgba(255,255,255,.10);
+      --dashBgSoft: rgba(255,255,255,.04);
+    }
+    body { color: var(--dashText); }
+    .small { color: var(--dashText2); }
+
+    .row{
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .row > div{
+      min-width: 180px;
+      flex: 1 1 180px;
+    }
+
+    select, input[type="date"], input[type="email"], input[type="password"]{
+      border: 1px solid var(--dashBorder);
+      background: var(--dashBgSoft);
+      color: var(--dashText);
+    }
+    textarea{
+      border: 1px solid var(--dashBorder);
+      background: var(--dashBgSoft);
+      color: var(--dashText);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    label{
+      color: var(--dashText2);
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+
+    #customDateRange{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px dashed var(--dashBorder);
+      border-radius: 12px;
+      background: rgba(0,0,0,.08);
+    }
+    #customDateRange.hidden{ display:none; }
+
+    .chartWrap{
+      height: 320px;
+      border: 1px solid var(--dashBorder);
+      border-radius: 16px;
+      background: rgba(0,0,0,.06);
+      padding: 10px;
+    }
+
+    pre#table{
+      border: 1px solid var(--dashBorder);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.06);
+      color: var(--dashText);
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="bar">
+    <div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>📋 טופס</button></a>
+      <a href="dashboard.html" style="text-decoration:none"><button class="active-tab">דשבורד 🔒</button></a>
+      <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
+      <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+
+
+
+  <div class="card">
+    <h3>פילטרים</h3>
+
+    <div class="row">
+      <div>
+        <label>סוג</label>
+        <select id="typeFilter">
+          <option value="">הכל</option>
+          <option value="ביקורת קצה מבצעי">ביקורת קצה מבצעי</option>
+          <option value="תרגול משימה">תרגול משימה</option>
+          <option value="תרגיל מסגרתי אורגני">תרגיל מסגרתי אורגני</option>
+          <option value="תרגיל משולב כוחות">תרגיל משולב כוחות</option>
+          <option value="ביקורת חמ״ל">ביקורת חמ״ל</option>
+          <option value="סיכום פעילות התקפית ⚔️">⚔️ סיכום פעילות התקפית</option>
+        </select>
+      </div>
+
+      <div>
+        <label>שילוב תצפיות</label>
+        <select id="obsFilter">
+          <option value="">הכל</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+          <option value="20">20</option>
+          <option value="40א">40א</option>
+          <option value="30">30</option>
+          <option value="ללא">ללא</option>
+        </select>
+      </div>
+      <div>
+        <label>תעסוקה מבצעית</label>
+        <select id="deploymentFilter">
+          <option value="">הכל</option>
+        </select>
+      </div>
+
+      <div>
+        <label>טווח</label>
+        <select id="daysBack">
+          <option value="7">7 ימים</option>
+          <option value="30" selected>30 ימים</option>
+          <option value="90">90 ימים</option>
+          <option value="365">365 ימים</option>
+          <option value="custom">מותאם</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="customDateRange" class="hidden" style="margin-top:10px">
+      <div>
+        <label>מתאריך</label>
+        <input type="date" id="dateFrom"/>
+      </div>
+      <div>
+        <label>עד תאריך</label>
+        <input type="date" id="dateTo"/>
+      </div>
+      <div class="small" style="grid-column:1 / -1">
+        טיפ: אם לא בוחרים תאריך-סיום, נשתמש ב"היום".
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:10px">
+      <button class="primary" id="loadBtn">טען סטטיסטיקות</button>
+      <button id="waExportBtn">📱 יצוא לוואטסאפ</button>
+    </div>
+
+    <div class="small" id="dashStatus"></div>
+  </div>
+
+  <div class="card">
+    <h3>גרפים לפי גזרות</h3>
+    <div class="small">כל גרף מציג חלוקה לפי סוגי תרגילים + כמה בוצעו ע"י צמ"מ וכמה ע"י מפקדים/אחרים.</div>
+    <div class="small">בפילטר סוג ניתן לבחור גם ⚔️ פעילות התקפית בלבד.</div>
+  </div>
+
+  <div class="card">
+    <h3>חיתוך תירגולים וביקורות מפקדים</h3>
+    <div class="small">הגרף מציג רק טפסים שמולאו על ידי מפקדים/אחרים, בחלוקה לפי גזרות וסוג טופס.</div>
+    <div class="chartWrap"><canvas id="chart_commanders_by_sector"></canvas></div>
+  </div>
+
+  <div id="sectorChartsContainer"></div>
+
+  <div class="card">
+    <h3>טבלת ספירות</h3>
+    <pre id="table" style="white-space:pre-wrap"></pre>
+  </div>
+
+  <div class="card">
+    <h3>טקסט לוואטסאפ</h3>
+    <div class="small">לחיצה על "יצוא לוואטסאפ" תייצר את הטקסט ותעתיק ללוח. כאן תראה גם את התוכן.</div>
+    <textarea id="waText" style="width:100%;min-height:160px"></textarea>
+    <div class="actions" style="margin-top:10px">
+      <button id="copyWaBtn">📋 העתק טקסט</button>
+      <a id="openWaLink" href="#" style="text-decoration:none" target="_blank" rel="noopener">
+        <button class="primary">פתח וואטסאפ</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+
+
+<script type="module" src="js/dashboard.js"></script>
+<script type="module">
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW Registered', reg))
+        .catch(err => console.log('SW Registration Failed', err));
+    });
+  }
+</script>
+</body>
+</html>
