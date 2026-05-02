@@ -289,6 +289,7 @@ function collectData() {
   const type = val("type");
   const deployment = val("deployment");
   if (!deployment) throw new Error("נא לבחור תעסוקה מבצעית");
+  if (!valTrim("force")) throw new Error("נא למלא את שדה כוח/משימה");
   const isAudit = type === AUDIT_TYPE;
   const isHq = type === HQ_TYPE;
   const isOffensive = type === OFFENSIVE_TYPE;
@@ -450,7 +451,9 @@ el("saveBtn")?.addEventListener("click", async () => {
   } catch (e) {
     console.error(e);
     try { if (waWindow && !waWindow.closed) waWindow.close(); } catch (_) {}
-    if (e.message === "נא למלא את שדה שילוב תצפיות בתרגילים" || e.message === "נא לבחור תעסוקה מבצעית") {
+    if (e.message === "נא למלא את שדה שילוב תצפיות בתרגילים" || 
+        e.message === "נא לבחור תעסוקה מבצעית" || 
+        e.message === "נא למלא את שדה כוח/משימה") {
       alert(e.message);
       if (statusLine) statusLine.textContent = "❌ " + e.message;
       return;
