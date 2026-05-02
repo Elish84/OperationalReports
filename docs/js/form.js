@@ -414,23 +414,29 @@ function collectData() {
 
 
 el("saveBtn")?.addEventListener("click", async () => {
-  const shouldPreopen = isMobile();
-  const waWindow = shouldPreopen ? window.open("about:blank", "_blank") : null;
-
   try {
     await ensureAnon();
     const data = collectData();
     data.createdAt = serverTimestamp();
     data.schemaVersion = 7;
 
+    if (statusLine) statusLine.textContent = "⌛ שומר ומייצא...";
+
     const res = await saveIfNeeded(data);
     const txt = buildWhatsappText(data);
     const waUrl = "https://wa.me/?text=" + encodeURIComponent(txt);
 
+    // Try clipboard
     try { await navigator.clipboard.writeText(txt); } catch (err) { console.warn("[form] Clipboard failed:", err); }
 
-    if (waWindow && !waWindow.closed) waWindow.location.href = waUrl;
-    else window.location.href = waUrl;
+    // Navigation
+    if (isMobile()) {
+      // On mobile, direct location change is more reliable for app intents
+      window.location.href = waUrl;
+    } else {
+      // On desktop, open in new tab
+      window.open(waUrl, "_blank", "noopener");
+    }
 
     // Clear form and localStorage after success
     resetForm();
