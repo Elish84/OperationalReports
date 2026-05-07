@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Is the user a registered admin in our admins collection?
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Reviews (Reports) collection
+    match /reviews/{reportId} {
+      // Anyone logged in (even anonymously) can submit a report
+      allow create: if request.auth != null;
+      
+      // ONLY admins can read, update or delete reports
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Settings collection (contains the 'lists' document)
+    match /settings/{docId} {
+      // Anyone logged in can read the settings (needed for form dropdowns)
+      allow read: if request.auth != null;
+      
+      // ONLY admins can modify settings
+      allow write: if isAdmin();
+    }
+    
+    // Admins collection - used for authorization
+    match /admins/{userId} {
+      // A user can read their own admin record to verify status
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // NO ONE can write to the admins collection from the client
+      // Management should only happen via the Firebase Console
+      allow write: if false;
+    }
+
+    // Default deny for everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

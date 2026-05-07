@@ -136,6 +136,16 @@ export const runManualRepair = onRequest({
     memory: '1Gi',
     timeoutSeconds: 540
 }, async (req, res) => {
+    // SECURITY: This is an unauthenticated HTTP trigger. 
+    // We added a simple secret token check to prevent unauthorized mass re-indexing.
+    const secret = req.query.secret;
+    const REPAIR_TOKEN = "owl_repair_2026"; // In production, move to Secret Manager
+    
+    if (secret !== REPAIR_TOKEN) {
+        console.error("Unauthorized attempt to run repair function");
+        return res.status(403).send("<h1>Unauthorized</h1><p>This maintenance function requires a valid secret token.</p>");
+    }
+
     const startAfterId = req.query.startAfter;
     
     try {
@@ -182,7 +192,7 @@ export const runManualRepair = onRequest({
         // Build the next URL
         const protocol = req.protocol;
         const host = req.get('host');
-        const nextUrl = `${protocol}://${host}${req.path}?startAfter=${lastDocId}`;
+        const nextUrl = `${protocol}://${host}${req.path}?secret=${REPAIR_TOKEN}&startAfter=${lastDocId}`;
 
         res.status(200).send(`
             <h1>Batch Complete!</h1>
