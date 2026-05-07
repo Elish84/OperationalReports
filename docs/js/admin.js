@@ -41,9 +41,9 @@ async function renderAdmin() {
             const isObj = typeof item === 'object' && item !== null;
             const name = isObj ? item.name : item;
             const active = isObj ? item.active : true;
-            const sectors = isObj && Array.isArray(item.sectors) ? item.sectors : ["", "", "", ""];
+            const sectors = isObj && Array.isArray(item.sectors) ? item.sectors : ["", "", "", "", ""];
             
-            const sectorSelects = [0,1,2,3].map(i => {
+            const sectorSelects = [0,1,2,3,4].map(i => {
               const current = sectors[i] || "";
               let options = `<option value="">-- בחר גזרה --</option>`;
               (activeLists.sectors || []).forEach(s => {
@@ -144,7 +144,7 @@ async function removeItem(listKey, index, reRenderCb) {
 
 async function addItem(listKey, value, reRenderCb) {
   const original = [...activeLists[listKey]];
-  const newItem = listKey === "deployments" ? { name: value, active: true, sectors: ["", "", "", ""] } : value;
+  const newItem = listKey === "deployments" ? { name: value, active: true, sectors: ["", "", "", "", ""] } : value;
   activeLists[listKey].push(newItem);
   try {
     statusDiv.textContent = "שומר שינויים...";
@@ -162,7 +162,7 @@ async function toggleDeployment(index, reRenderCb) {
   const item = activeLists.deployments[index];
   const name = typeof item === 'object' ? item.name : item;
   const currentActive = typeof item === 'object' ? item.active : true;
-  const sectors = typeof item === 'object' ? (item.sectors || ["","","",""]) : ["","","",""];
+  const sectors = typeof item === 'object' ? (item.sectors || ["","","","",""]) : ["","","","",""];
   activeLists.deployments[index] = { name, active: !currentActive, sectors };
   try {
     statusDiv.textContent = "שומר שינויים...";
@@ -180,7 +180,7 @@ async function updateDeploymentSector(depIndex, secIndex, newValue, reRenderCb) 
   const item = activeLists.deployments[depIndex];
   const name = typeof item === 'object' ? item.name : item;
   const active = typeof item === 'object' ? item.active : true;
-  const sectors = typeof item === 'object' && Array.isArray(item.sectors) ? [...item.sectors] : ["","","",""];
+  const sectors = typeof item === 'object' && Array.isArray(item.sectors) ? [...item.sectors] : ["","","","",""];
   sectors[secIndex] = newValue;
   activeLists.deployments[depIndex] = { name, active, sectors };
   try {
