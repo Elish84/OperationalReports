@@ -473,7 +473,12 @@ el("saveBtn")?.addEventListener("click", async () => {
 });
 
 // Initial load
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await ensureAnon();
+  } catch (e) {
+    console.warn("[form] Anonymous auth failed", e);
+  }
   loadContext();
   loadDynamicLists();
 });
