@@ -16,7 +16,7 @@
 <header>
   <div class="bar">
     <div>
-      <div class="brand">🦉 ינשוף</div>
+      <div class="brand">🦉 ינשוף <small id="appVersion" class="version-badge"></small></div>
       <div class="badge" id="autoDt"></div>
     </div>
     <div class="actions" style="margin:0">
@@ -24,6 +24,7 @@
       <a href="dashboard.html" style="text-decoration:none"><button>דשבורד 🔒</button></a>
       <a href="reports.html" style="text-decoration:none"><button>רשומות 🗂️</button></a>
       <a href="ai.html" style="text-decoration:none"><button>AI 🦉</button></a>
+      <a href="help.html" style="text-decoration:none"><button>❓ עזרה</button></a>
       <a href="admin.html" id="adminTabBtn" class="hidden" style="text-decoration:none"><button>מנהל הגדרות ⚙️</button></a>
       <button class="primary hidden" id="loginBtn">כניסה</button>
       <button class="danger hidden" id="logoutBtn">צא</button>
@@ -35,8 +36,10 @@
   <div style="text-align:center; margin-bottom:20px;">
     <img src="assets/banner.png" alt="ינשוף" style="max-width:100%; border-radius:16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);"/>
   </div>
-  <div class="card">
-    <h3>פרטי בסיס</h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+      <h3 style="margin:0">פרטי בסיס</h3>
+      <a href="forms-guide.html" class="small" style="text-decoration:none; color:var(--accent)">❓ איך למלא נכון?</a>
+    </div>
     <div class="small" style="margin-bottom:10px">⚠️ נא להקפיד על בטחון מידע ולא להזין מידע רגיש</div>
     
     <div class="row" style="margin-bottom:10px">

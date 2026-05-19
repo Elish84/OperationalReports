@@ -8,6 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 import { buildWhatsappText } from "./pdf.js";
 import { fetchLists, populateSelect } from "./lists.js";
+import { checkForUpdates } from "./version.js";
 
 const el = (id) => document.getElementById(id);
 const statusLine = el("statusLine");
@@ -480,7 +481,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("[form] Anonymous auth failed", e);
   }
   loadContext();
-  loadDynamicLists();
+  await loadDynamicLists();
+  checkForUpdates();
 });
 loadContext();
 loadDynamicLists();

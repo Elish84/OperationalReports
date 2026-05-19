@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>ינשוף - מדריך טפסים מעמיק 🦉</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    .guide-content {
+      line-height: 1.6;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 30px 0 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      color: var(--accent);
+    }
+    .type-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .emphasis {
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .warning-box {
+      background: rgba(251,113,133,0.1);
+      border: 1px solid rgba(251,113,133,0.3);
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      color: #fda4af;
+    }
+    .info-box {
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+    }
+    .step-box {
+      counter-reset: step-counter;
+      list-style-type: none;
+      padding: 0;
+    }
+    .step-box li {
+      counter-increment: step-counter;
+      margin-bottom: 15px;
+      display: flex;
+      gap: 15px;
+    }
+    .step-box li::before {
+      content: counter(step-counter);
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .traffic-light-demo {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .score-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">🦉 מדריך טפסים ומילוי נכון</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="help.html" style="text-decoration:none"><button>⬅️ חזרה לעזרה</button></a>
+      <a href="index.html" style="text-decoration:none"><button class="primary">📋 למילוי טופס</button></a>
+    </div>
+  </div>
+</header>
+
+<div class="container guide-content">
+  
+  <div class="card hero-banner" style="text-align: center; background: linear-gradient(135deg, rgba(74,222,128,0.1) 0%, rgba(18,28,47,1) 100%);">
+    <h2 style="margin:0">איך למלא טופס מושלם? ✍️</h2>
+    <p>מילוי נכון מבטיח שהנתונים שלך יתורגמו לתובנות מבצעיות מדויקות בדשבורד וב-AI.</p>
+  </div>
+
+  <h2 class="section-title">📍 שלב 1: הגדרות יסוד</h2>
+  <p>לפני שמתחילים לדרג, חשוב להגדיר את ההקשר של הדוח:</p>
+  
+  <ol class="step-box">
+    <li>
+      <div>
+        <strong class="emphasis">בחירת תעסוקה מבצעית:</strong> זהו השדה החשוב ביותר! הוא מאפשר למפקדים לסנן נתונים לפי תקופות זמן ומשימות על (למשל: "חורף חם 2024"). 
+        <div class="warning-box">
+          ⚠️ בחירה שגויה של תעסוקה תגרום לכך שהדוח שלך לא יופיע בגרפים הנכונים בדשבורד.
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong class="emphasis">סוג הטופס:</strong> המערכת משנה את פניה בהתאם לבחירה זו. וודאו שאתם בוחרים את הסוג המדויק (ביקורת vs סיכום פעילות).
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong class="emphasis">גזרה וכוח:</strong> הגזרה (אלון מורה, איתמר וכו') משמשת למיפוי גזרתי. שדה ה"כוח" הוא שדה חופשי – רשמו שם מדויק (למשל: "פלוגה ג' - מחלקה 1").
+      </div>
+    </li>
+  </ol>
+
+  <h2 class="section-title">📑 שלב 2: סוגי הטפסים והדגשים</h2>
+
+  <div class="type-card">
+    <h3>🔴🟡🟢 ביקורת קצה מבצעי (v2)</h3>
+    <p>הטופס הנפוץ ביותר לדירוג רמת מוכנות הכוח.</p>
+    <ul>
+      <li><strong>מבצעיות (80% מהציון):</strong> התמקדות במיקום העמדה, תדריכים, הבנת האיום ותרגולות.</li>
+      <li><strong>תקשוב, מודיעין ורפואה:</strong> משלימים את ה-20% הנותרים.</li>
+      <li><span class="emphasis">שיטת הדירוג:</span> כל סעיף מדורג מ-🔴 (גרוע) ועד 🟢 (מצוין). המערכת משקללת את הציון הסופי (0-100).</li>
+    </ul>
+    <div class="info-box">
+      💡 <strong>טיפ:</strong> בסעיף "תרגול הכוח", ציינו אם בוצע תרגול מתודי או מעשי – זה משפיע על ניתוח המיומנות בדשבורד.
+    </div>
+  </div>
+
+  <div class="type-card">
+    <h3>⚔️ סיכום פעילות התקפית</h3>
+    <p>מיועד לסיכום מעצרים, מארבים ופעילויות יזומות.</p>
+    <ul>
+      <li><strong>נוהל הקרב:</strong> דירוג איכות התכנון, איסוף המודיעין והכנת הכוח.</li>
+      <li><strong>ניהול הקרב:</strong> דירוג הביצוע בשטח, השליטה והחתירה למגע.</li>
+    </ul>
+    <p>כאן חשוב להקפיד על מילוי <span class="emphasis">סוג המשימה</span> ו<span class="emphasis">מיקום המשימה</span> (עיר, כפר, מ.פ).</p>
+  </div>
+
+  <div class="type-card">
+    <h3>🏢 ביקורת חמ״ל</h3>
+    <p>מיועד לבדיקת תקינות החמ"לים הגזרתיים.</p>
+    <ul>
+      <li><strong>צ'ק-ליסט רכיבים:</strong> סמנו מה קיים (שבצ"ק, מפות, פק"לים).</li>
+      <li><strong>תפקוד שוטף:</strong> תיעוד ביומן, איכות העברת משמרת והפעלת כוחות.</li>
+    </ul>
+  </div>
+
+  <h2 class="section-title">🖋️ שלב 3: הערות שימור ושיפור</h2>
+  <div class="card" style="border-right: 4px solid var(--accent);">
+    <p>זהו החלק ה"איכותני" של הדוח. המספרים נותנים סטטיסטיקה, אבל המילים נותנות תובנות.</p>
+    <div class="row">
+      <div class="type-card" style="margin:0">
+        <h4 style="color:var(--accent)">✅ שימור</h4>
+        <p class="small">מה עבד טוב? מה כדאי ששאר היחידות ילמדו מהן?</p>
+      </div>
+      <div class="type-card" style="margin:0">
+        <h4 style="color:var(--danger)">⚠️ שיפור</h4>
+        <p class="small">איפה הייתה התקלה? מה הפער המקצועי שזיהיתם?</p>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:15px">
+      ✨ <strong>למה זה חשוב?</strong> ה-AI של הינשוף סורק את ההערות האלו. אם תכתבו "היו בעיות", הוא לא ידע לעזור. אם תכתבו "חוסר במפות מעודכנות בעמדת התצפית", המפקדים יקבלו התראה על מחסור בציוד.
+    </div>
+  </div>
+
+  <h2 class="section-title">📲 שלב 4: שמירה ושיתוף</h2>
+  <p>בסיום המילוי, לחצו על <strong>"💾 שמירה ויצוא לוואטסאפ"</strong>.</p>
+  <ul>
+    <li>הנתונים נשמרים בבסיס הנתונים המאובטח.</li>
+    <li>הודעה מוכנה עם כל סיכום הנתונים תועתק עבורכם.</li>
+    <li>תוכלו לשלוח אותה מיידית לקבוצת המפקדים/הגזרה.</li>
+  </ul>
+
+  <div style="text-align: center; margin: 40px 0;">
+    <a href="index.html" style="text-decoration:none">
+      <button class="primary" style="padding: 15px 40px; font-size: 18px;">הבנתי, בוא נתחיל לדווח! 🚀</button>
+    </a>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initPWA } from './js/pwa-manager.js';
+  import { initGlobalAuthUI } from './js/auth.js';
+  initPWA();
+  initGlobalAuthUI(false);
+</script>
+</body>
+</html>

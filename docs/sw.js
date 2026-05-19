@@ -1,4 +1,4 @@
-const CACHE_NAME = '8109-v6';
+const CACHE_NAME = '8109-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,8 @@ const ASSETS = [
   './js/reports.js',
   './js/ai-insights.js',
   './js/pwa-manager.js',
+  './js/version.js',
+  './version.json',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>ינשוף - עזרה והדרכה 🦉</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    .help-section {
+      margin-bottom: 30px;
+      animation: fadeIn 0.6s ease-out both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .help-card {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      transition: transform 0.2s;
+    }
+    .help-card:hover {
+      transform: scale(1.01);
+    }
+    .icon-box {
+      font-size: 24px;
+      margin-bottom: 10px;
+      background: rgba(74,222,128,0.1);
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      border: 1px solid rgba(74,222,128,0.2);
+    }
+    .step-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .step-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: flex-start;
+    }
+    .step-number {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .grid-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .hero-banner {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, rgba(74,222,128,0.05) 0%, transparent 100%);
+      border-radius: 24px;
+      margin-bottom: 20px;
+    }
+    .hero-banner h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      color: var(--text);
+    }
+    .hero-banner p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-top: 10px;
+    }
+    .traffic-light {
+      display: inline-flex;
+      gap: 5px;
+      vertical-align: middle;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .red { background: #ef4444; }
+    .yellow { background: #f59e0b; }
+    .green { background: #10b981; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="brand">🦉 ינשוף - מרכז עזרה</div>
+    </div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="text-decoration:none"><button>📋 חזרה לטופס</button></a>
+      <button class="primary hidden" id="loginBtn">כניסה</button>
+      <button class="danger hidden" id="logoutBtn">צא</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="hero-banner">
+    <h1>איך להשתמש בינשוף? 🦉</h1>
+    <p>המדריך המלא לניהול, דיווח וניתוח פעילות מבצעית חכמה</p>
+  </div>
+
+  <div class="grid-sections">
+    <!-- Section 1: PWA -->
+    <div class="help-section" style="animation-delay: 0.1s">
+      <div class="card help-card">
+        <div class="icon-box">📱</div>
+        <h3>התקנה מהירה (PWA)</h3>
+        <p class="small">המערכת עובדת כאפליקציה לכל דבר, גם ללא דפדפן פתוח.</p>
+        <ul class="step-list">
+          <li class="step-item">
+            <div class="step-number">1</div>
+            <div><strong>באיפון:</strong> לחצו על "שיתוף" ולאחר מכן "הוספה למסך הבית".</div>
+          </li>
+          <li class="step-item">
+            <div class="step-number">2</div>
+            <div><strong>באנדרואיד:</strong> לחצו על 3 הנקודות ובחרו ב-"התקן אפליקציה".</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 2: Reporting -->
+    <div class="help-section" style="animation-delay: 0.2s">
+      <div class="card help-card">
+        <div class="icon-box">📋</div>
+        <h3>מילוי דיווח חכם</h3>
+        <p class="small">התאמה אוטומטית של השדות לפי סוג הפעילות שבחרתם.</p>
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-number">✔</div>
+            <div><strong>ביקורת קצה:</strong> דירוג לפי שיטת "רמזור" 
+              <span class="traffic-light"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>
+              הציון הסופי מחושב אוטומטית.
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-number">✔</div>
+            <div><strong>פעילות התקפית:</strong> תיעוד מפורט של נוהל קרב וניהול הקרב.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-number">✔</div>
+            <div><strong>יצוא מהיר:</strong> כפתור הוואטסאפ מכין הודעה מוכנה לשליחה לקבוצה.</div>
+          </div>
+        </div>
+        <div style="margin-top:10px; text-align:center">
+          <a href="forms-guide.html" style="text-decoration:none"><button class="secondary" style="width:100%">🔍 למדריך מילוי מעמיק</button></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: AI -->
+    <div class="help-section" style="animation-delay: 0.3s">
+      <div class="card help-card">
+        <div class="icon-box">✨</div>
+        <h3>שאל את הינשוף (AI)</h3>
+        <p class="small">ניתוח נתונים עמוק באמצעות בינה מלאכותית.</p>
+        <p>סננו את הגזרה או טווח הזמן, ושאלו שאלות חופשיות:</p>
+        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-style: italic; font-size: 13px; color: var(--accent);">
+          "מהן 3 התקלות הנפוצות ביותר בביקורות חמ״ל בחודש האחרון?"
+        </div>
+        <p class="small">המערכת תסכם עבורכם מגמות מתוך הערות הטקסט של כל המשתמשים.</p>
+      </div>
+    </div>
+
+    <!-- Section 4: Dashboard -->
+    <div class="help-section" style="animation-delay: 0.4s">
+      <div class="card help-card">
+        <div class="icon-box">📊</div>
+        <h3>דשבורד וסטטיסטיקה</h3>
+        <p class="small">צפייה במגמות ויזואליות בזמן אמת.</p>
+        <ul class="step-list">
+          <li class="step-item">
+            <div class="step-number">1</div>
+            <div><strong>פילטרים:</strong> סננו לפי גזרה או תעסוקה מבצעית.</div>
+          </li>
+          <li class="step-item">
+            <div class="step-number">2</div>
+            <div><strong>גרפים:</strong> השוואה בין כמות הביקורות לביצועי השטח.</div>
+          </li>
+          <li class="step-item">
+            <div class="step-number">3</div>
+            <div><strong>יצוא סיכום:</strong> הפקת דוח טקסטואלי מסוכם לוואטסאפ של כל הגזרה.</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card infoBanner" style="text-align: center; margin-top: 20px;">
+    💡 <strong>טיפ למקצוענים:</strong> ככל שתפרטו יותר בסעיפי ה"שימור" וה"שיפור", כך תובנות ה-AI יהיו מדויקות ומועילות יותר עבורכם!
+  </div>
+
+  <div style="text-align: center; margin-top: 40px; color: var(--muted); font-size: 12px;">
+    🦉 ינשוף - המערכת לניהול מבצעי חכם | גרסה 5.0
+  </div>
+</div>
+
+<script type="module">
+  import { initPWA } from './js/pwa-manager.js';
+  import { initGlobalAuthUI } from './js/auth.js';
+  
+  // Initialize PWA Manager (prompts, iOS)
+  initPWA();
+  // Initialize Global Auth UI
+  initGlobalAuthUI(false);
+  
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW Registered', reg))
+        .catch(err => console.log('SW Registration Failed', err));
+    });
+  }
+</script>
+</body>
+</html>
