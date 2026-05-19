@@ -49,9 +49,9 @@ export function initGlobalAuthUI(requireAuthForAccess = false) {
       <div class="small" id="globalLoginErr" style="color:#ff6b6b; margin-top:10px; text-align:center;"></div>
     </div>
   </div>`;
-  
+
   document.body.insertAdjacentHTML('beforeend', modalHtml);
-  
+
   const modal = document.getElementById('globalAuthModal');
   const emailIn = document.getElementById('globalAuthEmail');
   const passIn = document.getElementById('globalAuthPass');
@@ -73,7 +73,7 @@ export function initGlobalAuthUI(requireAuthForAccess = false) {
       await loginEmailPassword(emailIn.value.trim(), passIn.value);
       errDiv.textContent = '';
       modal.classList.add('hidden');
-    } catch(e) {
+    } catch (e) {
       errDiv.textContent = 'שגיאת התחברות. ודא פרטים מורשים.';
     }
   });
@@ -89,13 +89,13 @@ export function initGlobalAuthUI(requireAuthForAccess = false) {
   // Bind to generic header login/logout buttons
   const headerLoginBtn = document.getElementById('loginBtn');
   const headerLogoutBtn = document.getElementById('logoutBtn');
-  
+
   if (headerLoginBtn) {
     headerLoginBtn.addEventListener('click', () => {
       window.showLoginModal();
     });
   }
-  
+
   if (headerLogoutBtn) {
     headerLogoutBtn.addEventListener('click', async () => {
       await logout();
@@ -109,14 +109,14 @@ export function initGlobalAuthUI(requireAuthForAccess = false) {
   watchAuth(u => {
     // We treat Anonymous users as "Not Logged In" for the UI purpose
     const isRealUser = u && !u.isAnonymous;
-    
+
     if (headerLoginBtn) headerLoginBtn.classList.toggle('hidden', isRealUser);
     if (headerLogoutBtn) headerLogoutBtn.classList.toggle('hidden', !isRealUser);
-    
+
     // Check all possible admin tabs across pages
     const adminTabs = document.querySelectorAll('#adminTabBtn');
     adminTabs.forEach(tab => tab.classList.toggle('hidden', !isRealUser));
-    
+
     if (isRealUser) {
       modal.classList.add('hidden');
     } else if (requireAuthForAccess) {

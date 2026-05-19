@@ -1,4 +1,4 @@
-export const LOCAL_VERSION = "v7.0.0";
+export const LOCAL_VERSION = "v7.0.1";
 
 const VERSION_URL = "https://raw.githubusercontent.com/Elish84/OperationalReports/operational-report-v7/docs/version.json";
 
