@@ -188,6 +188,71 @@ function normalizeForScore(obj) {
 }
 
 const STORAGE_KEY = "8109_form_context";
+const DEVICE_ID_KEY = "8109_device_id";
+const PROFILE_PREFIX = "8109_device_profile_";
+
+function getOrCreateDeviceId() {
+  let devId = localStorage.getItem(DEVICE_ID_KEY);
+  if (!devId) {
+    devId = (crypto.randomUUID ? crypto.randomUUID() : "dev_" + Date.now() + "_" + Math.random().toString(36).slice(2));
+    localStorage.setItem(DEVICE_ID_KEY, devId);
+  }
+  return devId;
+}
+
+function getProfileStorageKey() {
+  return PROFILE_PREFIX + getOrCreateDeviceId();
+}
+
+function getSavedProfile() {
+  const raw = localStorage.getItem(getProfileStorageKey());
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveDeviceProfile(profile) {
+  localStorage.setItem(getProfileStorageKey(), JSON.stringify({
+    deployment: profile.deployment || "",
+    sector: profile.sector || "",
+    name: (profile.name || "").trim(),
+    role: profile.role || ""
+  }));
+}
+
+function hasProfileChanged(current, saved) {
+  if (!saved) return true;
+  return (
+    (current.deployment || "") !== (saved.deployment || "") ||
+    (current.sector || "") !== (saved.sector || "") ||
+    (current.name || "").trim() !== (saved.name || "").trim() ||
+    (current.role || "") !== (saved.role || "")
+  );
+}
+
+function applySavedProfileToForm() {
+  const saved = getSavedProfile();
+  if (!saved) return false;
+
+  if (saved.deployment && el("deployment")) {
+    el("deployment").value = saved.deployment;
+  }
+  updateSectors();
+
+  if (saved.sector && el("sector")) {
+    el("sector").value = saved.sector;
+  }
+  if (saved.role && el("role")) {
+    el("role").value = saved.role;
+  }
+  if (saved.name && el("name")) {
+    el("name").value = saved.name;
+  }
+  return true;
+}
 
 function saveContext() {
   const context = {
@@ -206,7 +271,8 @@ function resetForm() {
     "off_keep_proc_1", "off_keep_proc_2", "off_keep_proc_3", "off_imp_proc_1", "off_imp_proc_2", "off_imp_proc_3",
     "off_keep_manage_1", "off_keep_manage_2", "off_keep_manage_3", "off_imp_manage_1", "off_imp_manage_2", "off_imp_manage_3",
     "exerciseDescription", "offMissionType", "offLocationType", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12",
-    "hq_r1", "hq_r2", "hq_r3", "hq_r4", "hq_r5", "hq_r6", "hq_r7", "hq_r8", "hq_r9", "hq_r10", "hq_outline", "hq_exerciseEvaluation"
+    "hq_r1", "hq_r2", "hq_r3", "hq_r4", "hq_r5", "hq_r6", "hq_r7", "hq_r8", "hq_r9", "hq_r10", "hq_outline", "hq_exerciseEvaluation",
+    "force"
   ];
   ids.forEach(id => {
     const field = el(id);
@@ -214,33 +280,45 @@ function resetForm() {
     if (field.type === "checkbox") field.checked = false;
     else field.value = "";
   });
-  // We don't reset name/role/sector/deployment/battalion as they are usually persistent for the user session
-  // But the user specifically asked to "clear the form". 
-  // I'll clear everything except maybe the name if they want, but I'll clear it all to be safe.
-  ["name", "force"].forEach(id => { if(el(id)) el(id).value = ""; });
+
+  // Restore saved device profile if available; otherwise clear personal fields
+  if (!applySavedProfileToForm()) {
+    ["name", "role", "sector", "deployment"].forEach(id => {
+      if (el(id)) el(id).value = "";
+    });
+  }
   
   // Re-sync UI
   el("type")?.dispatchEvent(new Event("change"));
 }
 
 function loadContext() {
+  const savedProfile = getSavedProfile();
   const contextStr = localStorage.getItem(STORAGE_KEY);
-  if (!contextStr) return;
-  try {
-    const context = JSON.parse(contextStr);
-    if (context.role) { el("role").value = context.role; }
-    if (context.name) { el("name").value = context.name; }
-    if (context.sector) { el("sector").value = context.sector; }
-    if (context.force) { el("force").value = context.force; }
-    if (context.deployment) { el("deployment").value = context.deployment; }
-    
-    // Trigger any UI updates if needed
-    el("deployment")?.dispatchEvent(new Event("change"));
-    el("type")?.dispatchEvent(new Event("change"));
-  } catch (e) { console.warn("Failed to load context", e); }
+  let source = null;
+
+  if (contextStr) {
+    try { source = JSON.parse(contextStr); } catch (e) {}
+  }
+  const effective = {
+    deployment: source?.deployment || savedProfile?.deployment || "",
+    sector: source?.sector || savedProfile?.sector || "",
+    role: source?.role || savedProfile?.role || "",
+    name: source?.name || savedProfile?.name || "",
+    force: source?.force || ""
+  };
+
+  if (effective.deployment && el("deployment")) el("deployment").value = effective.deployment;
+  updateSectors();
+  if (effective.sector && el("sector")) el("sector").value = effective.sector;
+  if (effective.role && el("role")) el("role").value = effective.role;
+  if (effective.name && el("name")) el("name").value = effective.name;
+  if (effective.force && el("force")) el("force").value = effective.force;
+
+  el("type")?.dispatchEvent(new Event("change"));
 }
 
-function updateSectors() {
+function updateSectors(preferredSector = null) {
   if (!cachedLists) return;
   const depName = val("deployment");
   const depObj = (cachedLists.deployments || []).find(d => (typeof d === 'object' ? d.name : d) === depName);
@@ -253,25 +331,37 @@ function updateSectors() {
     }
   }
   
-  const currentSector = val("sector");
+  const currentSector = preferredSector !== null ? preferredSector : val("sector");
   populateSelect("sector", sectorsToShow, currentSector);
 }
 
 async function loadDynamicLists() {
   try {
+    const savedProfile = getSavedProfile();
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (e) {}
+
+    const targetDeployment = val("deployment") || draft?.deployment || savedProfile?.deployment || "";
+    const targetSector = val("sector") || draft?.sector || savedProfile?.sector || "";
+    const targetRole = val("role") || draft?.role || savedProfile?.role || "";
+    const targetName = valTrim("name") || draft?.name || savedProfile?.name || "";
+
     const lists = await fetchLists();
     cachedLists = lists;
-    populateSelect("sector", lists.sectors, val("sector"));
     populateSelect("observationsIntegration", lists.observations, val("observationsIntegration"));
-    populateSelect("role", lists.roles, val("role"));
+    populateSelect("role", lists.roles, targetRole);
     
     const activeDeployments = (lists.deployments || [])
       .filter(d => typeof d === 'object' ? d.active : true)
       .map(d => typeof d === 'object' ? d.name : d);
-    populateSelect("deployment", activeDeployments, val("deployment"));
+    populateSelect("deployment", activeDeployments, targetDeployment);
     
-    // Initial filter
-    updateSectors();
+    // Filter sectors according to selected deployment and restore target sector
+    updateSectors(targetSector);
+
+    if (targetName && el("name")) {
+      el("name").value = targetName;
+    }
   } catch (err) {
     console.error("Failed loading lists", err);
   }
@@ -419,17 +509,40 @@ el("saveBtn")?.addEventListener("click", async () => {
   try {
     await ensureAnon();
     const data = collectData();
+    data.meta.deviceId = getOrCreateDeviceId();
     data.createdAt = serverTimestamp();
     data.schemaVersion = 7;
 
     if (statusLine) statusLine.textContent = "⌛ שומר ומייצא...";
 
     const res = await saveIfNeeded(data);
+
+    // Check if we should offer to save/update the user's profile on this device
+    const currentProfile = {
+      deployment: data.meta.deployment || "",
+      sector: data.meta.sector || "",
+      name: data.meta.name || "",
+      role: data.meta.role || ""
+    };
+    const savedProfile = getSavedProfile();
+    if (hasProfileChanged(currentProfile, savedProfile)) {
+      const promptMsg = savedProfile
+        ? "זיהינו שינוי בפרטים האישיים (תעסוקה מבצעית, גזרה, שם מלא או תפקיד).\nהאם לעדכן ולשמור את הפרטים החדשים במכשיר זה לפעמים הבאות?"
+        : "האם לשמור את פרטיך (תעסוקה מבצעית, גזרה, שם מלא ותפקיד) במכשיר זה למילוי אוטומטי בפעמים הבאות?";
+      if (window.confirm(promptMsg)) {
+        saveDeviceProfile(currentProfile);
+      }
+    }
+
     const txt = buildWhatsappText(data);
     const waUrl = "https://wa.me/?text=" + encodeURIComponent(txt);
 
     // Try clipboard
     try { await navigator.clipboard.writeText(txt); } catch (err) { console.warn("[form] Clipboard failed:", err); }
+
+    // Clear form and draft context after success (will re-populate saved device profile if approved)
+    localStorage.removeItem(STORAGE_KEY);
+    resetForm();
 
     // Navigation
     if (isMobile()) {
@@ -440,10 +553,6 @@ el("saveBtn")?.addEventListener("click", async () => {
       window.open(waUrl, "_blank", "noopener");
     }
 
-    // Clear form and localStorage after success
-    resetForm();
-    localStorage.removeItem(STORAGE_KEY);
-
     if (statusLine) {
       statusLine.textContent = res.isDuplicate
         ? `📲 נשמר בעבר (נמנע כפילות). נפתח וואטסאפ… מזהה: ${res.id}`
@@ -451,7 +560,6 @@ el("saveBtn")?.addEventListener("click", async () => {
     }
   } catch (e) {
     console.error(e);
-    try { if (waWindow && !waWindow.closed) waWindow.close(); } catch (_) {}
     if (e.message === "נא למלא את שדה שילוב תצפיות בתרגילים" || 
         e.message === "נא לבחור תעסוקה מבצעית" || 
         e.message === "נא למלא את שדה כוח/משימה") {
@@ -474,7 +582,8 @@ el("saveBtn")?.addEventListener("click", async () => {
 });
 
 // Initial load
-document.addEventListener("DOMContentLoaded", async () => {
+async function initForm() {
+  getOrCreateDeviceId();
   try {
     await ensureAnon();
   } catch (e) {
@@ -483,6 +592,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadContext();
   await loadDynamicLists();
   checkForUpdates();
-});
-loadContext();
-loadDynamicLists();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initForm);
+} else {
+  initForm();
+}
+
