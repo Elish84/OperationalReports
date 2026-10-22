@@ -56,46 +56,65 @@ watchAuth(async (u) => {
   }
 });
 
+function isMobileDevice() {
+  return window.innerWidth < 768 || /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+}
+
+// Extract only the minimal fields needed for dashboard aggregation so we don't keep
+// large text fields or 768-float AI embedding vectors in mobile RAM.
+function toLightRecord(raw) {
+  return {
+    eventDate: getEventDate(raw),
+    sector: readSector(raw),
+    deployment: raw?.meta?.deployment || raw?.operationalEmployment || "",
+    observationsIntegration: raw?.observationsIntegration || "",
+    type: raw?.type || "לא ידוע",
+    role: readRole(raw)
+  };
+}
+
 async function fetchAllReviews(fromDate = null, maxDocs = 5000) {
-  const all = []; let cursor = null;
+  const all = [];
+  let cursor = null;
   const sinceTs = fromDate ? Timestamp.fromDate(fromDate) : null;
+  const batchSize = isMobileDevice() ? 250 : 500;
   
   while (all.length < maxDocs) {
-    // Increase limit to 1000 for fewer roundtrips
-    const qParts = [collection(db, "reviews"), orderBy("createdAt", "desc"), limit(1000)];
+    const qParts = [collection(db, "reviews"), orderBy("createdAt", "desc"), limit(batchSize)];
     if (sinceTs) qParts.push(where("createdAt", ">=", sinceTs));
     if (cursor) qParts.push(startAfter(cursor));
     
     const snap = await getDocs(query(...qParts));
-    const docs = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
-    all.push(...docs);
+    for (let i = 0; i < snap.docs.length; i++) {
+      all.push(toLightRecord(snap.docs[i].data()));
+    }
 
     if (dashStatus && all.length > 0) dashStatus.textContent = `טוען רשומות (${all.length})...`;
-    if (snap.docs.length < 1000) break;
+    if (snap.docs.length < batchSize) break;
     cursor = snap.docs[snap.docs.length - 1];
     
-    // Give UI thread a moment to breathe
-    await new Promise(r => setTimeout(r, 0));
+    // Give UI thread and Garbage Collector a moment to breathe between batches
+    await new Promise(r => setTimeout(r, 15));
   }
   return all;
 }
 
-function aggregate(docs, { fromDate, toDateEnd, typeFilter, obsFilter, deploymentFilter }) {
+function aggregate(lightDocs, { fromDate, toDateEnd, typeFilter, obsFilter, deploymentFilter }) {
   const bySector = {}; SECTORS.forEach((s) => { bySector[s] = { byType: {}, totals: { tzmm: 0, other: 0 } }; });
   const typesSet = new Set(); let kept = 0;
-  for (const { data } of docs) {
-    const ev = getEventDate(data); if (!ev) continue; if (fromDate && ev < fromDate) continue; if (toDateEnd && ev > toDateEnd) continue;
-    const sector = readSector(data); if (!SECTORS.includes(sector)) continue;
-    if (deploymentFilter && (data?.meta?.deployment || '') !== deploymentFilter) continue;
+  for (const item of lightDocs) {
+    const ev = item.eventDate; if (!ev) continue; if (fromDate && ev < fromDate) continue; if (toDateEnd && ev > toDateEnd) continue;
+    const sector = item.sector; if (!SECTORS.includes(sector)) continue;
+    if (deploymentFilter && item.deployment !== deploymentFilter) continue;
     if (obsFilter === 'כל התצפיות') {
-      if (!data?.observationsIntegration || data?.observationsIntegration === 'ללא') continue;
-    } else if (obsFilter && data?.observationsIntegration !== obsFilter) continue;
-    const rawType = data?.type || "לא ידוע";
+      if (!item.observationsIntegration || item.observationsIntegration === 'ללא') continue;
+    } else if (obsFilter && item.observationsIntegration !== obsFilter) continue;
+    const rawType = item.type || "לא ידוע";
     let type = rawType;
     if (normalizeType(rawType) === normalizeType(OFFENSIVE_TYPE)) type = OFFENSIVE_TYPE;
     else if (normalizeType(rawType) === normalizeType(DRONE_TYPE)) type = DRONE_TYPE;
     if (typeFilter && normalizeType(type) !== normalizeType(typeFilter)) continue;
-    const isTzmm = readRole(data) === 'צמ"מ' || readRole(data) === 'צמ״מ';
+    const isTzmm = item.role === 'צמ"מ' || item.role === 'צמ״מ';
     const bucket = bySector[sector]; typesSet.add(type);
     if (!bucket.byType[type]) bucket.byType[type] = { tzmm: 0, other: 0 };
     if (isTzmm) { bucket.byType[type].tzmm++; bucket.totals.tzmm++; } else { bucket.byType[type].other++; bucket.totals.other++; }
@@ -106,13 +125,15 @@ function aggregate(docs, { fromDate, toDateEnd, typeFilter, obsFilter, deploymen
 
 function renderChartForSector(canvasId, labels, countsByType) {
   const ctx = document.getElementById(canvasId); if (!ctx) return; charts.get(canvasId)?.destroy();
+  const mobile = isMobileDevice();
   const chart = new Chart(ctx, {
     type: "bar",
     data: { labels, datasets: [ { label: 'צמ״מ', data: labels.map((t) => countsByType[t]?.tzmm || 0), stack: "s" }, { label: OTHER_LABEL, data: labels.map((t) => countsByType[t]?.other || 0), stack: "s" } ] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: window.innerWidth < 768 ? false : { duration: 1000 },
+      devicePixelRatio: mobile ? Math.min(window.devicePixelRatio || 1, 1.5) : undefined,
+      animation: mobile ? false : { duration: 600 },
       scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
     },
   });
@@ -133,13 +154,15 @@ function renderCommandersBySectorChart(agg) {
     stack: 'commanders'
   }));
 
+  const mobile = isMobileDevice();
   const chart = new Chart(ctx, {
     type: 'bar',
     data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: window.innerWidth < 768 ? false : { duration: 1000 },
+      devicePixelRatio: mobile ? Math.min(window.devicePixelRatio || 1, 1.5) : undefined,
+      animation: mobile ? false : { duration: 600 },
       scales: {
         x: { stacked: true },
         y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
@@ -233,23 +256,40 @@ function updateDashboardSectors() {
   }
 }
 
+let cachedLightDocs = null;
+let cachedFetchKey = "";
+
 async function loadDashboard() {
   try {
     dashStatus.textContent = 'טוען...';
     await initDashboard();
     
     const { fromDate, toDateEnd, label } = getDateRange();
+    const fetchKey = fromDate ? String(fromDate.getTime()) : "all";
     
-    // 60s Timeout for initial fetch
-    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout (60s)")), 60000));
-    const docs = await Promise.race([fetchAllReviews(fromDate), timeout]);
+    let lightDocs;
+    if (cachedLightDocs && cachedFetchKey === fetchKey) {
+      lightDocs = cachedLightDocs;
+    } else {
+      // 60s Timeout for initial fetch
+      let timerId;
+      const timeout = new Promise((_, rej) => {
+        timerId = setTimeout(() => rej(new Error("Timeout (60s)")), 60000);
+      });
+      try {
+        lightDocs = await Promise.race([fetchAllReviews(fromDate), timeout]);
+        cachedLightDocs = lightDocs;
+        cachedFetchKey = fetchKey;
+      } finally {
+        clearTimeout(timerId);
+      }
+    }
 
     const obsFilterEl = document.getElementById("obsFilter");
     const deploymentFilterEl = document.getElementById("deploymentFilter");
     
-    // Chunked aggregation to avoid blocking UI thread
     dashStatus.textContent = 'מנתח נתונים...';
-    const agg = aggregate(docs, { 
+    const agg = aggregate(lightDocs, { 
       fromDate, 
       toDateEnd, 
       typeFilter: typeFilterEl?.value || '', 
@@ -259,8 +299,15 @@ async function loadDashboard() {
     lastAgg = agg; lastRangeLabel = label;
     const labels = agg.types.length ? agg.types : ['אין נתונים'];
     
-    // Staggered chart rendering to keep UI responsive on mobile
+    // Destroy existing sector charts BEFORE clearing DOM to release GPU/Canvas memory on mobile
     try {
+      for (const [key, ch] of charts.entries()) {
+        if (key.startsWith("chart_sector_")) {
+          ch.destroy();
+          charts.delete(key);
+        }
+      }
+
       const container = el("sectorChartsContainer");
       if (container) {
         container.innerHTML = "";
@@ -276,14 +323,11 @@ async function loadDashboard() {
       renderCommandersBySectorChart(agg);
       renderTable(agg);
 
-      // Staggered render for sector charts
+      // Sequential render for sector charts so mobile GPU isn't overwhelmed
       for (let i = 0; i < SECTORS.length; i++) {
         const s = SECTORS[i];
-        // Using a small delay for each chart to allow the browser to breathe
-        await new Promise(resolve => setTimeout(() => {
-          renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType);
-          resolve();
-        }, 50 * i)); 
+        await new Promise(resolve => setTimeout(resolve, 40));
+        renderChartForSector(`chart_sector_${i}`, labels, agg.bySector[s].byType);
       }
     } catch (chartErr) {
       console.error("Chart Rendering Error:", chartErr);
