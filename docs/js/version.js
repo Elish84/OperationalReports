@@ -1,4 +1,4 @@
-export const LOCAL_VERSION = "v7.0.1";
+export const LOCAL_VERSION = "v7.0.2";
 
 const VERSION_URL = "https://raw.githubusercontent.com/Elish84/OperationalReports/operational-report-v7/docs/version.json";
 
@@ -8,6 +8,7 @@ export function loadVersionLabel() {
 }
 
 export async function checkForUpdates() {
+  loadVersionLabel();
   try {
     const resp = await fetch(`${VERSION_URL}?t=${Date.now()}`); // bust cache
     if (!resp.ok) return;
@@ -15,12 +16,9 @@ export async function checkForUpdates() {
 
     if (remoteVersion !== LOCAL_VERSION) {
       showUpdateBanner(remoteVersion);
-    } else {
-      loadVersionLabel();
     }
   } catch (e) {
     console.warn("[update] תקלה בבדיקה:", e);
-    loadVersionLabel();
   }
 }
 
